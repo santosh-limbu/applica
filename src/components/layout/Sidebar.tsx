@@ -1,7 +1,5 @@
 import {
   LayoutDashboard,
-  PlusCircle,
-  User,
   Settings,
   Sparkles,
 } from 'lucide-react'
@@ -10,8 +8,6 @@ import { useProfileStore } from '@/stores/profile.store'
 
 const navItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'new-application', label: 'New Application', icon: PlusCircle },
-  { id: 'profile', label: 'Profile', icon: User },
   { id: 'settings', label: 'Settings', icon: Settings },
 ] as const
 

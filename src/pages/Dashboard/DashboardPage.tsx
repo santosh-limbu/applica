@@ -19,6 +19,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
 import Modal from '@/components/ui/Modal'
+import ProfilePanel from './ProfilePanel'
 
 const statusFilters = [
   'all',
@@ -109,178 +110,189 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="page-header">
-        <h1 className="page-title">Dashboard</h1>
-        <p className="page-subtitle">Track and manage your job applications</p>
+      <div className="page-header flex justify-between items-center mb-6">
+        <div>
+          <h1 className="page-title">Dashboard</h1>
+          <p className="page-subtitle">Track and manage your job applications</p>
+        </div>
+        <Button iconLeft={<PlusCircle size={16} />} onClick={() => navigate('new-application')}>
+          New Application
+        </Button>
       </div>
 
-      {/* Stats row */}
-      <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-        <StatCard icon={Briefcase} label="Total Applications" value={stats.total} />
-        <StatCard icon={TrendingUp} label="Active" value={stats.active} color="var(--info)" />
-        <StatCard icon={Target} label="Interviews" value={stats.interviews} color="var(--accent-primary)" />
-        <StatCard icon={Trophy} label="Offers" value={stats.offers} color="var(--success)" />
-      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '24px', alignItems: 'start' }}>
+        {/* Left Column: Profile widget */}
+        <ProfilePanel />
 
-      {/* Filter bar */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="flex-1">
-          <div className="input-with-icon">
-            <span className="input-icon">
-              <Search size={16} />
-            </span>
-            <input
-              className="input-field"
-              placeholder="Search applications…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-            />
+        {/* Right Column: Applications Tracker & Stats */}
+        <div className="flex flex-col gap-6" style={{ minWidth: 0 }}>
+          {/* Stats row */}
+          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+            <StatCard icon={Briefcase} label="Total Applications" value={stats.total} />
+            <StatCard icon={TrendingUp} label="Active" value={stats.active} color="var(--info)" />
+            <StatCard icon={Target} label="Interviews" value={stats.interviews} color="var(--accent-primary)" />
+            <StatCard icon={Trophy} label="Offers" value={stats.offers} color="var(--success)" />
           </div>
-        </div>
 
-        <div className="flex gap-1">
-          {statusFilters.map((s) => (
-            <button
-              key={s}
-              className={`btn btn-sm ${statusFilter === s ? 'btn-primary' : 'btn-ghost'}`}
-              onClick={() => setStatusFilter(s)}
-            >
-              {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
+          {/* Filter bar */}
+          <div className="flex items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-default">
+            <div className="flex-1 max-w-sm">
+              <div className="input-with-icon">
+                <span className="input-icon">
+                  <Search size={16} />
+                </span>
+                <input
+                  className="input-field"
+                  placeholder="Search applications…"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                />
+              </div>
+            </div>
 
-      {/* Applications list */}
-      {isLoading ? (
-        <div className="flex flex-col gap-3">
-          {[1, 2, 3].map((i) => (
-            <div key={i} className="skeleton" style={{ height: 96 }} />
-          ))}
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="empty-state">
-          <FileText className="empty-state-icon" />
-          <h3 className="empty-state-title">
-            {applications.length === 0 ? 'No applications yet' : 'No matching applications'}
-          </h3>
-          <p className="empty-state-text">
-            {applications.length === 0
-              ? 'Create your first application to start tracking your job search'
-              : 'Try adjusting your search or filter criteria'}
-          </p>
-          {applications.length === 0 && (
-            <Button iconLeft={<PlusCircle size={16} />} onClick={() => navigate('new-application')}>
-              Create Application
-            </Button>
-          )}
-        </div>
-      ) : (
-        <div className="flex flex-col gap-3">
-          {filtered.map((app) => (
-            <Card key={app.id} hover variant="surface" padding="none">
-              <div className="flex items-center gap-4 p-4">
-                {/* Company initial */}
-                <div
-                  className="flex items-center justify-center rounded-lg font-bold text-lg"
-                  style={{
-                    width: 48,
-                    height: 48,
-                    background: 'var(--accent-muted)',
-                    color: 'var(--accent-primary)',
-                    flexShrink: 0,
-                  }}
+            <div className="flex gap-1 flex-wrap">
+              {statusFilters.map((s) => (
+                <button
+                  key={s}
+                  className={`btn btn-sm ${statusFilter === s ? 'btn-primary' : 'btn-ghost'}`}
+                  onClick={() => setStatusFilter(s)}
                 >
-                  {app.company.charAt(0).toUpperCase()}
-                </div>
+                  {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
+                </button>
+              ))}
+            </div>
+          </div>
 
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-3 mb-1">
-                    <h4 className="text-md font-semibold truncate">{app.role_title}</h4>
-                    <Badge status={app.status || 'draft'} />
-                  </div>
-                  <div className="flex items-center gap-3 text-sm text-tertiary">
-                    <span>{app.company}</span>
-                    {app.applied_date && (
-                      <>
-                        <span>·</span>
-                        <span>{new Date(app.applied_date).toLocaleDateString()}</span>
-                      </>
-                    )}
-                  </div>
-                </div>
-
-                {/* ATS score */}
-                {app.ats_score !== undefined && app.ats_score !== null && (
-                  <div className="flex flex-col items-end" style={{ minWidth: 80 }}>
-                    <span className="text-xs text-tertiary mb-1">ATS Score</span>
-                    <div className="ats-bar" style={{ width: 80 }}>
-                      <div className="ats-bar-track">
-                        <div className="ats-bar-fill" style={{ width: `${app.ats_score}%` }} />
-                      </div>
-                      <span className="ats-bar-score">{app.ats_score}%</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Actions */}
-                <div className="flex items-center gap-1">
-                  <div className="relative">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        setStatusMenu(statusMenu === app.id ? null : (app.id ?? null))
+          {/* Applications list */}
+          {isLoading ? (
+            <div className="flex flex-col gap-3">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="skeleton" style={{ height: 96 }} />
+              ))}
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="empty-state bg-surface rounded-xl border border-default p-12">
+              <FileText className="empty-state-icon" />
+              <h3 className="empty-state-title">
+                {applications.length === 0 ? 'No applications yet' : 'No matching applications'}
+              </h3>
+              <p className="empty-state-text">
+                {applications.length === 0
+                  ? 'Create your first application to start tracking your job search'
+                  : 'Try adjusting your search or filter criteria'}
+              </p>
+              {applications.length === 0 && (
+                <Button iconLeft={<PlusCircle size={16} />} onClick={() => navigate('new-application')}>
+                  Create Application
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filtered.map((app) => (
+                <Card key={app.id} hover variant="surface" padding="none">
+                  <div className="flex items-center gap-4 p-4">
+                    {/* Company initial */}
+                    <div
+                      className="flex items-center justify-center rounded-lg font-bold text-lg"
+                      style={{
+                        width: 48,
+                        height: 48,
+                        background: 'var(--accent-muted)',
+                        color: 'var(--accent-primary)',
+                        flexShrink: 0,
                       }}
                     >
-                      <MoreHorizontal size={16} />
-                    </Button>
+                      {app.company.charAt(0).toUpperCase()}
+                    </div>
 
-                    {statusMenu === app.id && (
-                      <div
-                        className="absolute right-0 top-full mt-1 p-1 card card-elevated rounded-md"
-                        style={{ minWidth: 140, zIndex: 100 }}
-                      >
-                        {statusOptions.map((st) => (
-                          <button
-                            key={st}
-                            className="btn btn-ghost btn-sm w-full"
-                            style={{ justifyContent: 'flex-start' }}
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              if (app.id) handleStatusChange(app.id, st)
-                            }}
-                          >
-                            <Badge status={st} />
-                          </button>
-                        ))}
+                    {/* Info */}
+                    <div className="flex-1 min-w-0" onClick={() => {
+                      setCurrentApplication(app)
+                      navigate('editor') // Click to open editor
+                    }} style={{ cursor: 'pointer' }}>
+                      <div className="flex items-center gap-3 mb-1">
+                        <h4 className="text-md font-semibold truncate hover:text-accent transition-colors">{app.role_title}</h4>
+                        <Badge status={app.status || 'draft'} />
+                      </div>
+                      <div className="flex items-center gap-3 text-sm text-tertiary">
+                        <span>{app.company}</span>
+                        {app.applied_date && (
+                          <>
+                            <span>·</span>
+                            <span>{new Date(app.applied_date).toLocaleDateString()}</span>
+                          </>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* ATS score */}
+                    {app.ats_score !== undefined && app.ats_score !== null && (
+                      <div className="flex flex-col items-end" style={{ minWidth: 80 }}>
+                        <span className="text-xs text-tertiary mb-1">ATS Score</span>
+                        <div className="ats-bar" style={{ width: 80 }}>
+                          <div className="ats-bar-track">
+                            <div className="ats-bar-fill" style={{ width: `${app.ats_score}%` }} />
+                          </div>
+                          <span className="ats-bar-score">{app.ats_score}%</span>
+                        </div>
                       </div>
                     )}
+
+                    {/* Actions */}
+                    <div className="flex items-center gap-1">
+                      <div className="relative">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setStatusMenu(statusMenu === app.id ? null : (app.id ?? null))
+                          }}
+                        >
+                          <MoreHorizontal size={16} />
+                        </Button>
+
+                        {statusMenu === app.id && (
+                          <div
+                            className="absolute right-0 top-full mt-1 p-1 card card-elevated rounded-md"
+                            style={{ minWidth: 140, zIndex: 100 }}
+                          >
+                            {statusOptions.map((st) => (
+                              <button
+                                key={st}
+                                className="btn btn-ghost btn-sm w-full"
+                                style={{ justifyContent: 'flex-start' }}
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  if (app.id) handleStatusChange(app.id, st)
+                                }}
+                              >
+                                <Badge status={st} />
+                              </button>
+                            ))}
+                          </div>
+                        )}
+                      </div>
+
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setDeleteTarget(app)
+                        }}
+                      >
+                        <Trash2 size={16} style={{ color: 'var(--danger)' }} />
+                      </Button>
+                    </div>
                   </div>
-
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      setDeleteTarget(app)
-                    }}
-                  >
-                    <Trash2 size={16} style={{ color: 'var(--danger)' }} />
-                  </Button>
-                </div>
-              </div>
-            </Card>
-          ))}
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
-      )}
-
-      {/* FAB */}
-      <button className="fab" onClick={() => navigate('new-application')} aria-label="New Application">
-        <PlusCircle size={24} />
-      </button>
+      </div>
 
       {/* Delete modal */}
       <Modal
