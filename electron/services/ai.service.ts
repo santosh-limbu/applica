@@ -120,11 +120,39 @@ export function saveProviderConfig(config: ProviderConfig): void {
 
 function parseJsonResponse<T>(text: string): T {
   let cleaned = text.trim();
-  const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
+
+  // 1. Remove thinking/reasoning blocks (e.g., <think>...</think>) commonly output by reasoning models
+  cleaned = cleaned.replace(/<think>[\s\S]*?<\/think>/gi, '').trim();
+
+  // 2. Try to match markdown code block fences
+  const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/i);
   if (fenceMatch) {
     cleaned = fenceMatch[1].trim();
   }
-  return JSON.parse(cleaned) as T;
+
+  // 3. Fallback: extract the JSON object bounded by the first '{' and last '}'
+  const startIdx = cleaned.indexOf('{');
+  const endIdx = cleaned.lastIndexOf('}');
+  if (startIdx !== -1 && endIdx !== -1 && endIdx > startIdx) {
+    cleaned = cleaned.substring(startIdx, endIdx + 1).trim();
+  }
+
+  // 4. Strip single-line (//) and multi-line (/* */) comments that local LLMs might hallucinate inside the JSON
+  cleaned = cleaned
+    .replace(/\/\*[\s\S]*?\*\//g, '')
+    .replace(/(^|[^:])\/\/.*$/gm, '$1');
+
+  // 5. Repair trailing commas inside arrays or objects (common LLM formatting slip-up)
+  cleaned = cleaned.replace(/,(\s*[\]}])/g, '$1');
+
+  try {
+    return JSON.parse(cleaned) as T;
+  } catch (err) {
+    console.error('[ai.service:parseJsonResponse] JSON parsing failed.');
+    console.error('Raw LLM Response text was:', text);
+    console.error('Cleaned text targeted for parsing was:', cleaned);
+    throw new Error(`Invalid JSON format returned by AI: ${(err as Error).message}`);
+  }
 }
 
 // ── Public API (unchanged signatures for IPC layer) ──────────
