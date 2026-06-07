@@ -34,7 +34,14 @@ export class OpenAICompatProvider implements AIProvider {
     name: string = 'OpenAI Compatible'
   ) {
     // Normalise: strip trailing slash
-    this.baseUrl = endpoint.replace(/\/+$/, '');
+    let base = endpoint.replace(/\/+$/, '');
+    
+    // If the endpoint already ends with /v1, strip it so we can append /v1/chat/completions cleanly
+    if (base.endsWith('/v1')) {
+      base = base.substring(0, base.length - 3);
+    }
+    
+    this.baseUrl = base;
     this.model = model;
     this.apiKey = apiKey;
     this.name = name;
