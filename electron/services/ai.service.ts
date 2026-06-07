@@ -1,8 +1,15 @@
 // ============================================================
-// Applica — AI Service (Google Gemini)
+// Applica — AI Service (Provider-Agnostic)
 // ============================================================
+// All AI features route through the active provider via the
+// AIProvider interface. Prompts are model-agnostic.
 
-import { GoogleGenerativeAI, type GenerativeModel } from '@google/generative-ai';
+import type { AIProvider, ProviderConfig } from './ai-provider.interface';
+import { AVAILABLE_PROVIDERS } from './ai-provider.interface';
+import { GeminiProvider } from './gemini.provider';
+import { OpenAICompatProvider } from './openai-compat.provider';
+import * as db from './database.service';
+import * as storage from './storage.service';
 import type {
   Profile,
   Experience,
@@ -14,19 +21,105 @@ import type {
   ATSScore
 } from '../types';
 
-// ── Helpers ──────────────────────────────────────────────────
+// ── Provider Factory ─────────────────────────────────────────
 
-function createModel(apiKey: string): GenerativeModel {
-  const genAI = new GoogleGenerativeAI(apiKey);
-  return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+/**
+ * Read the saved provider config from the DB and construct the
+ * appropriate AIProvider instance.
+ */
+export function getActiveProvider(): AIProvider {
+  const config = getProviderConfig();
+
+  switch (config.provider) {
+    case 'gemini': {
+      const apiKey = config.apiKey || storage.getApiKey();
+      if (!apiKey) {
+        throw new Error('No Gemini API key configured. Please add your API key in Settings.');
+      }
+      return new GeminiProvider(apiKey, config.model || 'gemini-2.0-flash');
+    }
+
+    case 'ollama': {
+      const endpoint = config.endpoint || 'http://localhost:11434';
+      const model = config.model || 'llama3.2';
+      return new OpenAICompatProvider(endpoint, model, undefined, 'Ollama');
+    }
+
+    case 'openai-compat': {
+      const endpoint = config.endpoint || 'http://localhost:1234';
+      const model = config.model || 'default';
+      return new OpenAICompatProvider(endpoint, model, config.apiKey, 'OpenAI Compatible');
+    }
+
+    default:
+      throw new Error(`Unknown AI provider: ${config.provider}`);
+  }
 }
 
 /**
- * Try to extract a JSON block from a possibly markdown-fenced response.
+ * Build a temporary provider from an arbitrary config (for testing
+ * connections before saving).
  */
+export function createProviderFromConfig(config: ProviderConfig): AIProvider {
+  switch (config.provider) {
+    case 'gemini': {
+      if (!config.apiKey) throw new Error('Gemini requires an API key.');
+      return new GeminiProvider(config.apiKey, config.model || 'gemini-2.0-flash');
+    }
+    case 'ollama': {
+      return new OpenAICompatProvider(
+        config.endpoint || 'http://localhost:11434',
+        config.model || 'llama3.2',
+        undefined,
+        'Ollama'
+      );
+    }
+    case 'openai-compat': {
+      return new OpenAICompatProvider(
+        config.endpoint || 'http://localhost:1234',
+        config.model || 'default',
+        config.apiKey,
+        'OpenAI Compatible'
+      );
+    }
+    default:
+      throw new Error(`Unknown provider: ${config.provider}`);
+  }
+}
+
+// ── Config persistence ───────────────────────────────────────
+
+export function getProviderConfig(): ProviderConfig {
+  const provider = (db.getSetting('ai_provider') as ProviderConfig['provider']) || 'ollama';
+  const endpoint = db.getSetting('ai_endpoint') || undefined;
+  const model = db.getSetting('ai_model') || undefined;
+  const apiKey = provider === 'gemini' ? storage.getApiKey() || undefined : (db.getSetting('ai_api_key') || undefined);
+
+  return { provider, endpoint, model, apiKey };
+}
+
+export function saveProviderConfig(config: ProviderConfig): void {
+  db.setSetting('ai_provider', config.provider);
+
+  if (config.endpoint) {
+    db.setSetting('ai_endpoint', config.endpoint);
+  }
+  if (config.model) {
+    db.setSetting('ai_model', config.model);
+  }
+
+  // For Gemini, store key in secure storage; for others, in settings
+  if (config.provider === 'gemini' && config.apiKey) {
+    storage.saveApiKey(config.apiKey);
+  } else if (config.apiKey) {
+    db.setSetting('ai_api_key', config.apiKey);
+  }
+}
+
+// ── Helpers ──────────────────────────────────────────────────
+
 function parseJsonResponse<T>(text: string): T {
   let cleaned = text.trim();
-  // Strip markdown code fences
   const fenceMatch = cleaned.match(/```(?:json)?\s*([\s\S]*?)```/);
   if (fenceMatch) {
     cleaned = fenceMatch[1].trim();
@@ -34,30 +127,41 @@ function parseJsonResponse<T>(text: string): T {
   return JSON.parse(cleaned) as T;
 }
 
-// ── Public API ───────────────────────────────────────────────
+// ── Public API (unchanged signatures for IPC layer) ──────────
 
-/**
- * Validate that an API key can authenticate with Gemini.
- */
 export async function testConnection(apiKey: string): Promise<boolean> {
+  // Legacy method for backwards compat — tests Gemini specifically
   try {
-    const model = createModel(apiKey);
-    const result = await model.generateContent('Respond with the single word: OK');
-    const text = result.response.text();
-    return text.toLowerCase().includes('ok');
+    const provider = new GeminiProvider(apiKey);
+    return await provider.testConnection();
   } catch {
     return false;
   }
 }
 
-/**
- * Analyse a job description and extract structured information.
- */
+export async function testProviderConnection(config: ProviderConfig): Promise<boolean> {
+  try {
+    const provider = createProviderFromConfig(config);
+    return await provider.testConnection();
+  } catch {
+    return false;
+  }
+}
+
+export async function listProviderModels(config: ProviderConfig): Promise<string[]> {
+  try {
+    const provider = createProviderFromConfig(config);
+    return await provider.listModels();
+  } catch {
+    return [];
+  }
+}
+
 export async function analyzeJob(
-  apiKey: string,
+  _apiKeyOrIgnored: string,
   description: string
 ): Promise<JobAnalysis> {
-  const model = createModel(apiKey);
+  const provider = getActiveProvider();
 
   const prompt = `You are an expert career analyst. Analyse the following job description and extract structured information.
 
@@ -84,15 +188,12 @@ Return a JSON object with EXACTLY this schema (no additional keys):
 JOB DESCRIPTION:
 ${description}`;
 
-  const result = await model.generateContent(prompt);
-  return parseJsonResponse<JobAnalysis>(result.response.text());
+  const text = await provider.generateText(prompt);
+  return parseJsonResponse<JobAnalysis>(text);
 }
 
-/**
- * Generate a tailored CV based on the candidate profile and a job analysis.
- */
 export async function generateCV(
-  apiKey: string,
+  _apiKeyOrIgnored: string,
   profile: Profile,
   experiences: Experience[],
   education: Education[],
@@ -101,7 +202,7 @@ export async function generateCV(
   jobAnalysis: JobAnalysis,
   templateId: string
 ): Promise<GeneratedCV> {
-  const model = createModel(apiKey);
+  const provider = getActiveProvider();
 
   const candidateInfo = JSON.stringify(
     { profile, experiences, education, skills, certifications },
@@ -154,20 +255,17 @@ Return a JSON object with EXACTLY this schema:
   "content_html": "string — full CV content as clean HTML suitable for the ${templateId} template. Use semantic HTML: h1 for name, h2 for section headers, ul/li for bullets, p for text."
 }`;
 
-  const result = await model.generateContent(prompt);
-  return parseJsonResponse<GeneratedCV>(result.response.text());
+  const text = await provider.generateText(prompt);
+  return parseJsonResponse<GeneratedCV>(text);
 }
 
-/**
- * Generate a tailored cover letter.
- */
 export async function generateCoverLetter(
-  apiKey: string,
+  _apiKeyOrIgnored: string,
   profile: Profile,
   experiences: Experience[],
   jobAnalysis: JobAnalysis
 ): Promise<string> {
-  const model = createModel(apiKey);
+  const provider = getActiveProvider();
 
   const writingToneInstruction = profile.writing_samples
     ? `The candidate has provided writing samples. Match their natural voice, tone, and vocabulary:
@@ -201,19 +299,16 @@ Responsibilities: ${jobAnalysis.key_responsibilities.join('; ')}
 
 Return ONLY the cover letter text (plain text with paragraph breaks). Do NOT wrap in JSON or code fences.`;
 
-  const result = await model.generateContent(prompt);
-  return result.response.text().trim();
+  const text = await provider.generateText(prompt);
+  return text.trim();
 }
 
-/**
- * Score a CV against a job description for ATS compatibility.
- */
 export async function scoreATS(
-  apiKey: string,
+  _apiKeyOrIgnored: string,
   cvContent: string,
   jobDescription: string
 ): Promise<ATSScore> {
-  const model = createModel(apiKey);
+  const provider = getActiveProvider();
 
   const prompt = `You are an ATS (Applicant Tracking System) scoring engine. Evaluate how well the given CV matches the job description.
 
@@ -240,6 +335,6 @@ ${cvContent}
 JOB DESCRIPTION:
 ${jobDescription}`;
 
-  const result = await model.generateContent(prompt);
-  return parseJsonResponse<ATSScore>(result.response.text());
+  const text = await provider.generateText(prompt);
+  return parseJsonResponse<ATSScore>(text);
 }

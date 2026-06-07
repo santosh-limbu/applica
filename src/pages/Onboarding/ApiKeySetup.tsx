@@ -1,62 +1,131 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Key,
   ExternalLink,
-  Copy,
   ArrowRight,
   ArrowLeft,
   CheckCircle,
   AlertCircle,
-  Eye,
-  EyeOff,
   Sparkles,
+  Monitor,
+  Plug,
+  Loader2,
+  RefreshCw,
 } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
+import type { ProviderConfig, ProviderInfo } from '@/types/ipc.types'
+
+const PROVIDER_ICONS: Record<string, React.ReactNode> = {
+  Monitor: <Monitor size={24} />,
+  Plug: <Plug size={24} />,
+  Sparkles: <Sparkles size={24} />,
+}
 
 export default function ApiKeySetup() {
   const navigate = useAppStore((s) => s.navigate)
   const addToast = useAppStore((s) => s.addToast)
 
-  const [apiKey, setApiKey] = useState('')
-  const [showKey, setShowKey] = useState(false)
+  const [providers, setProviders] = useState<ProviderInfo[]>([])
+  const [config, setConfig] = useState<ProviderConfig>({
+    provider: 'ollama',
+    endpoint: 'http://localhost:11434',
+  })
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [models, setModels] = useState<string[]>([])
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [testing, setTesting] = useState(false)
   const [testResult, setTestResult] = useState<'success' | 'error' | null>(null)
 
+  // Load available providers
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const available = await window.api.getAvailableProviders()
+        setProviders(available)
+      } catch (e) {
+        console.error('Failed to load providers', e)
+      }
+    }
+    load()
+  }, [])
+
+  // Fetch models when provider/endpoint changes
+  useEffect(() => {
+    if (config.provider === 'gemini') return
+    const fetchModels = async () => {
+      setIsLoadingModels(true)
+      try {
+        const modelList = await window.api.listProviderModels(config)
+        setModels(modelList)
+        if (modelList.length > 0 && !config.model) {
+          setConfig(prev => ({ ...prev, model: modelList[0] }))
+        }
+      } catch {
+        setModels([])
+      } finally {
+        setIsLoadingModels(false)
+      }
+    }
+    const timer = setTimeout(fetchModels, 600)
+    return () => clearTimeout(timer)
+  }, [config.provider, config.endpoint])
+
+  const handleSelectProvider = (id: ProviderConfig['provider']) => {
+    const info = providers.find(p => p.id === id)
+    setConfig({
+      provider: id,
+      endpoint: info?.defaultEndpoint || config.endpoint,
+      model: undefined,
+      apiKey: undefined,
+    })
+    setApiKeyInput('')
+    setTestResult(null)
+    setModels([])
+  }
+
   const handleTest = async () => {
-    if (!apiKey.trim()) return
     setTesting(true)
     setTestResult(null)
     try {
-      const ok = await window.api.testApiKey(apiKey.trim())
+      const testConfig: ProviderConfig = {
+        ...config,
+        apiKey: apiKeyInput || undefined,
+      }
+      const ok = await window.api.testProviderConnection(testConfig)
       setTestResult(ok ? 'success' : 'error')
       if (ok) {
-        await window.api.saveApiKey(apiKey.trim())
-        addToast({ type: 'success', title: 'API key verified', message: 'Connection to Gemini AI is working' })
+        // Save on successful test
+        await window.api.saveProviderConfig(testConfig)
+        addToast({ type: 'success', title: 'Connected!', message: `Successfully connected to ${config.provider}` })
       } else {
-        addToast({ type: 'error', title: 'Invalid API key', message: 'Please check your key and try again' })
+        addToast({ type: 'error', title: 'Connection failed', message: 'Check your endpoint and model.' })
       }
     } catch {
       setTestResult('error')
-      addToast({ type: 'error', title: 'Connection failed', message: 'Could not reach the Gemini API' })
+      addToast({ type: 'error', title: 'Connection failed', message: 'Could not reach the AI provider.' })
     } finally {
       setTesting(false)
     }
   }
 
-  const handleContinue = async () => {
+  const handleContinue = () => {
     if (testResult === 'success') {
       navigate('onboarding-profile')
     }
   }
 
   const handleSkip = async () => {
+    // Save the config even on skip so it persists
+    try {
+      await window.api.saveProviderConfig(config)
+    } catch { /* ignore */ }
     addToast({
       type: 'warning',
       title: 'AI features disabled',
-      message: 'You can add your API key later in Settings',
+      message: 'You can configure your AI provider later in Settings',
     })
     navigate('onboarding-profile')
   }
@@ -77,88 +146,152 @@ export default function ApiKeySetup() {
               className="feature-icon"
               style={{ width: 56, height: 56, borderRadius: 'var(--radius-lg)' }}
             >
-              <Sparkles size={28} />
+              <Monitor size={28} />
             </div>
           </div>
-          <h2 className="text-2xl font-bold mb-2">Connect to Gemini AI</h2>
-          <p className="text-secondary text-sm" style={{ maxWidth: 400, margin: '0 auto' }}>
-            Applica uses Google's Gemini AI to analyze job descriptions and generate tailored CVs
+          <h2 className="text-2xl font-bold mb-2">Connect an AI Provider</h2>
+          <p className="text-secondary text-sm" style={{ maxWidth: 440, margin: '0 auto' }}>
+            Applica uses AI to analyze job descriptions and generate tailored CVs.
+            Connect a local LLM or a cloud provider.
           </p>
         </div>
 
-        {/* Steps guide */}
-        <Card variant="surface" padding="md" className="mb-6">
-          <div className="flex flex-col gap-4">
-            <StepGuide
-              number={1}
-              title="Visit Google AI Studio"
-              description={
-                <a
-                  href="https://aistudio.google.com/apikey"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-accent"
-                >
-                  aistudio.google.com/apikey <ExternalLink size={12} />
-                </a>
-              }
-            />
-            <StepGuide
-              number={2}
-              title="Create an API key"
-              description="Click 'Create API Key' and select a project"
-            />
-            <StepGuide
-              number={3}
-              title="Paste your key below"
-              description="We store it securely on your device"
-            />
-          </div>
-        </Card>
+        {/* Provider selector */}
+        <div className="grid grid-cols-3 gap-2 mb-5">
+          {providers.map((p) => (
+            <button
+              key={p.id}
+              className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all ${
+                config.provider === p.id
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-subtle hover:border-accent/30 text-muted'
+              }`}
+              onClick={() => handleSelectProvider(p.id)}
+            >
+              {PROVIDER_ICONS[p.icon] || <Monitor size={24} />}
+              <span className="text-xs font-semibold">{p.name}</span>
+            </button>
+          ))}
+        </div>
 
-        {/* API key input */}
-        <div className="mb-4">
-          <div className="flex gap-2">
-            <div className="flex-1">
+        {/* Provider-specific fields */}
+        <Card variant="surface" padding="md" className="mb-5">
+          <div className="flex flex-col gap-3">
+            {/* Endpoint (local providers) */}
+            {config.provider !== 'gemini' && (
               <Input
-                type={showKey ? 'text' : 'password'}
-                placeholder="Paste your Gemini API key…"
-                value={apiKey}
+                label="Endpoint URL"
+                value={config.endpoint || ''}
                 onChange={(e) => {
-                  setApiKey((e.target as HTMLInputElement).value)
+                  setConfig(prev => ({ ...prev, endpoint: (e.target as HTMLInputElement).value }))
                   setTestResult(null)
                 }}
-                iconLeft={<Key size={16} />}
+                placeholder={config.provider === 'ollama' ? 'http://localhost:11434' : 'http://localhost:1234'}
               />
+            )}
+
+            {/* API Key (Gemini required, OpenAI-compat optional) */}
+            {(config.provider === 'gemini' || config.provider === 'openai-compat') && (
+              <div>
+                <Input
+                  type="password"
+                  label={config.provider === 'gemini' ? 'API Key' : 'API Key (optional)'}
+                  placeholder={config.provider === 'gemini' ? 'Paste your Gemini API key' : 'Leave blank if not required'}
+                  value={apiKeyInput}
+                  onChange={(e) => {
+                    setApiKeyInput((e.target as HTMLInputElement).value)
+                    setTestResult(null)
+                  }}
+                  iconLeft={<Key size={16} />}
+                />
+                {config.provider === 'gemini' && (
+                  <p className="text-xs text-tertiary mt-1">
+                    Get a free key from{' '}
+                    <a
+                      href="https://aistudio.google.com/apikey"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent inline-flex items-center gap-1"
+                    >
+                      Google AI Studio <ExternalLink size={10} />
+                    </a>
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Model selector */}
+            <div>
+              <label className="block text-sm font-medium text-secondary mb-1">Model</label>
+              <div className="flex gap-2">
+                {config.provider === 'gemini' ? (
+                  <select
+                    className="input-field flex-1"
+                    value={config.model || 'gemini-2.0-flash'}
+                    onChange={e => setConfig(prev => ({ ...prev, model: e.target.value }))}
+                  >
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                  </select>
+                ) : models.length > 0 ? (
+                  <select
+                    className="input-field flex-1"
+                    value={config.model || ''}
+                    onChange={e => setConfig(prev => ({ ...prev, model: e.target.value }))}
+                  >
+                    {!config.model && <option value="">Select a model...</option>}
+                    {models.map(m => <option key={m} value={m}>{m}</option>)}
+                  </select>
+                ) : (
+                  <div className="flex-1">
+                    <Input
+                      value={config.model || ''}
+                      onChange={e => setConfig(prev => ({ ...prev, model: (e.target as HTMLInputElement).value }))}
+                      placeholder={config.provider === 'ollama' ? 'e.g. llama3.2' : 'e.g. default'}
+                    />
+                  </div>
+                )}
+                {config.provider !== 'gemini' && (
+                  <button
+                    className="p-2.5 rounded-lg border border-subtle hover:bg-accent/10 text-muted hover:text-accent transition-colors"
+                    onClick={async () => {
+                      setIsLoadingModels(true)
+                      try {
+                        const list = await window.api.listProviderModels(config)
+                        setModels(list)
+                      } catch { setModels([]) }
+                      finally { setIsLoadingModels(false) }
+                    }}
+                    title="Refresh models"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
+              </div>
+              {isLoadingModels && (
+                <p className="text-xs text-accent mt-1 flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Detecting models...
+                </p>
+              )}
             </div>
-            <Button
-              variant="ghost"
-              size="md"
-              onClick={() => setShowKey(!showKey)}
-              aria-label={showKey ? 'Hide key' : 'Show key'}
-            >
-              {showKey ? <EyeOff size={16} /> : <Eye size={16} />}
-            </Button>
           </div>
-        </div>
+        </Card>
 
         {/* Test result */}
         {testResult && (
           <div
             className={`flex items-center gap-2 mb-4 p-3 rounded-md text-sm ${
-              testResult === 'success'
-                ? 'text-success'
-                : 'text-danger'
+              testResult === 'success' ? 'text-success' : 'text-danger'
             }`}
             style={{
-              background:
-                testResult === 'success' ? 'var(--success-muted)' : 'var(--danger-muted)',
+              background: testResult === 'success' ? 'var(--success-muted)' : 'var(--danger-muted)',
             }}
           >
             {testResult === 'success' ? <CheckCircle size={16} /> : <AlertCircle size={16} />}
             {testResult === 'success'
-              ? 'API key is valid — connected successfully!'
-              : 'Invalid API key — please check and try again'}
+              ? 'Connected successfully!'
+              : 'Connection failed — check your settings and try again.'}
           </div>
         )}
 
@@ -169,7 +302,10 @@ export default function ApiKeySetup() {
             size="md"
             onClick={handleTest}
             loading={testing}
-            disabled={!apiKey.trim()}
+            disabled={
+              (config.provider === 'gemini' && !apiKeyInput.trim()) ||
+              (config.provider !== 'gemini' && !config.endpoint)
+            }
             className="flex-1"
           >
             Test Connection
@@ -214,37 +350,6 @@ function StepIndicator({ current, total }: { current: number; total: number }) {
           )}
         </div>
       ))}
-    </div>
-  )
-}
-
-function StepGuide({
-  number,
-  title,
-  description,
-}: {
-  number: number
-  title: string
-  description: React.ReactNode
-}) {
-  return (
-    <div className="flex items-start gap-3">
-      <div
-        className="flex items-center justify-center rounded-full font-bold text-xs"
-        style={{
-          width: 24,
-          height: 24,
-          flexShrink: 0,
-          background: 'var(--accent-muted)',
-          color: 'var(--accent-primary)',
-        }}
-      >
-        {number}
-      </div>
-      <div>
-        <div className="text-sm font-semibold text-primary">{title}</div>
-        <div className="text-xs text-tertiary mt-1">{description}</div>
-      </div>
     </div>
   )
 }

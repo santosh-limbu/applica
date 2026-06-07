@@ -3,49 +3,142 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useAppStore } from '@/stores/app.store'
-import { Settings, Key, Palette, HardDrive, AlertTriangle } from 'lucide-react'
+import type { ProviderConfig, ProviderInfo } from '@/types/ipc.types'
+import {
+  Settings, Key, Palette, HardDrive, AlertTriangle,
+  Monitor, Plug, Sparkles, CheckCircle, XCircle, Loader2, RefreshCw
+} from 'lucide-react'
+
+const PROVIDER_ICONS: Record<string, React.ReactNode> = {
+  Monitor: <Monitor className="w-6 h-6" />,
+  Plug: <Plug className="w-6 h-6" />,
+  Sparkles: <Sparkles className="w-6 h-6" />,
+}
 
 export const SettingsPage: React.FC = () => {
-  const [apiKey, setApiKey] = useState('')
-  const [isTesting, setIsTesting] = useState(false)
   const { addToast } = useAppStore()
 
+  // Provider state
+  const [providers, setProviders] = useState<ProviderInfo[]>([])
+  const [config, setConfig] = useState<ProviderConfig>({ provider: 'ollama', endpoint: 'http://localhost:11434' })
+  const [apiKeyInput, setApiKeyInput] = useState('')
+  const [models, setModels] = useState<string[]>([])
+  const [isTesting, setIsTesting] = useState(false)
+  const [isLoadingModels, setIsLoadingModels] = useState(false)
+  const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
+  const [isSaving, setIsSaving] = useState(false)
+
+  // Load provider info on mount
   useEffect(() => {
-    const loadApiKey = async () => {
+    const load = async () => {
       try {
-        const key = await window.api.getApiKey()
-        if (key) {
-          setApiKey('••••••••••••••••••••••••')
+        const [availableProviders, savedConfig] = await Promise.all([
+          window.api.getAvailableProviders(),
+          window.api.getProviderConfig(),
+        ])
+        setProviders(availableProviders)
+        setConfig(savedConfig)
+        if (savedConfig.apiKey && savedConfig.apiKey !== '••••••••') {
+          setApiKeyInput(savedConfig.apiKey)
+        } else if (savedConfig.apiKey === '••••••••') {
+          setApiKeyInput('••••••••')
         }
       } catch (e) {
-        console.error(e)
+        console.error('Failed to load provider config', e)
       }
     }
-    loadApiKey()
+    load()
   }, [])
 
-  const handleTestKey = async () => {
-    if (apiKey === '••••••••••••••••••••••••' || !apiKey) {
-      addToast({ title: 'Error', message: 'Please enter a valid API key to test', type: 'warning' })
-      return
+  // Fetch models when provider or endpoint changes
+  useEffect(() => {
+    if (config.provider === 'gemini') return // Gemini models are hardcoded
+    const fetchModels = async () => {
+      setIsLoadingModels(true)
+      try {
+        const modelList = await window.api.listProviderModels(config)
+        setModels(modelList)
+        // Auto-select first model if none selected
+        if (modelList.length > 0 && !config.model) {
+          setConfig(prev => ({ ...prev, model: modelList[0] }))
+        }
+      } catch {
+        setModels([])
+      } finally {
+        setIsLoadingModels(false)
+      }
     }
+    // Debounce slightly so rapid typing doesn't spam requests
+    const timer = setTimeout(fetchModels, 500)
+    return () => clearTimeout(timer)
+  }, [config.provider, config.endpoint])
 
+  const handleSelectProvider = (providerId: ProviderConfig['provider']) => {
+    const info = providers.find(p => p.id === providerId)
+    setConfig({
+      provider: providerId,
+      endpoint: info?.defaultEndpoint || config.endpoint,
+      model: undefined,
+      apiKey: undefined,
+    })
+    setApiKeyInput('')
+    setConnectionStatus('idle')
+    setModels([])
+  }
+
+  const handleTestConnection = async () => {
     setIsTesting(true)
+    setConnectionStatus('idle')
     try {
-      const isValid = await window.api.testApiKey(apiKey)
-      if (isValid) {
-        await window.api.saveApiKey(apiKey)
-        addToast({ title: 'Success', message: 'API key is valid and has been saved securely', type: 'success' })
-        setApiKey('••••••••••••••••••••••••')
+      const testConfig: ProviderConfig = {
+        ...config,
+        apiKey: apiKeyInput && apiKeyInput !== '••••••••' ? apiKeyInput : undefined,
+      }
+      const success = await window.api.testProviderConnection(testConfig)
+      setConnectionStatus(success ? 'success' : 'error')
+      if (success) {
+        addToast({ title: 'Connected', message: `Successfully connected to ${config.provider}`, type: 'success' })
       } else {
-        addToast({ title: 'Error', message: 'Invalid API key. Please check and try again', type: 'error' })
+        addToast({ title: 'Connection Failed', message: 'Could not connect. Check the endpoint and model.', type: 'error' })
       }
     } catch (e: any) {
-      addToast({ title: 'Error', message: e.message || 'Failed to test API key', type: 'error' })
+      setConnectionStatus('error')
+      addToast({ title: 'Error', message: e.message || 'Connection test failed', type: 'error' })
     } finally {
       setIsTesting(false)
     }
   }
+
+  const handleSave = async () => {
+    setIsSaving(true)
+    try {
+      const saveConfig: ProviderConfig = {
+        ...config,
+        apiKey: apiKeyInput && apiKeyInput !== '••••••••' ? apiKeyInput : undefined,
+      }
+      await window.api.saveProviderConfig(saveConfig)
+      addToast({ title: 'Saved', message: 'AI provider settings saved', type: 'success' })
+    } catch (e: any) {
+      addToast({ title: 'Error', message: e.message || 'Failed to save settings', type: 'error' })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleRefreshModels = async () => {
+    setIsLoadingModels(true)
+    try {
+      const modelList = await window.api.listProviderModels(config)
+      setModels(modelList)
+      addToast({ title: 'Models Refreshed', message: `Found ${modelList.length} models`, type: 'success' })
+    } catch {
+      setModels([])
+    } finally {
+      setIsLoadingModels(false)
+    }
+  }
+
+  const selectedProviderInfo = providers.find(p => p.id === config.provider)
 
   return (
     <div className="flex flex-col h-full overflow-hidden p-6 gap-6">
@@ -56,37 +149,147 @@ export const SettingsPage: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto pr-2 pb-10 max-w-3xl flex flex-col gap-8">
         
-        {/* API Key Section */}
+        {/* AI Provider Section */}
         <section>
           <div className="flex items-center gap-2 mb-4">
-            <Key className="w-5 h-5 text-accent" />
-            <h2 className="text-xl font-semibold text-white">Gemini API Key</h2>
+            <Settings className="w-5 h-5 text-accent" />
+            <h2 className="text-xl font-semibold text-white">AI Provider</h2>
           </div>
+
+          {/* Provider selector cards */}
+          <div className="grid grid-cols-3 gap-3 mb-6">
+            {providers.map((p) => (
+              <Card
+                key={p.id}
+                className={`p-4 cursor-pointer transition-all ${
+                  config.provider === p.id
+                    ? 'border-accent bg-accent/10 ring-1 ring-accent/30'
+                    : 'hover:border-subtle'
+                }`}
+                onClick={() => handleSelectProvider(p.id)}
+              >
+                <div className="flex flex-col items-center text-center gap-2">
+                  <div className={`${config.provider === p.id ? 'text-accent' : 'text-muted'}`}>
+                    {PROVIDER_ICONS[p.icon] || <Monitor className="w-6 h-6" />}
+                  </div>
+                  <div className="font-semibold text-sm text-white">{p.name}</div>
+                  <div className="text-xs text-muted leading-tight">{p.description}</div>
+                </div>
+              </Card>
+            ))}
+          </div>
+
+          {/* Provider-specific configuration */}
           <Card className="p-6 flex flex-col gap-4">
-            <p className="text-sm text-muted">
-              Applica uses Google's Gemini AI to analyze job descriptions and generate tailored CVs. 
-              Your API key is securely encrypted on your device.
-            </p>
-            <div className="flex gap-4 items-end">
-              <div className="flex-1">
-                <Input 
-                  label="API Key" 
-                  type="password" 
-                  value={apiKey} 
-                  onChange={e => setApiKey(e.target.value)} 
-                  placeholder="Paste your Gemini API key here"
+            {/* Endpoint input (for local providers) */}
+            {config.provider !== 'gemini' && (
+              <div>
+                <Input
+                  label="Endpoint URL"
+                  value={config.endpoint || ''}
+                  onChange={e => setConfig(prev => ({ ...prev, endpoint: (e.target as HTMLInputElement).value }))}
+                  placeholder={selectedProviderInfo?.defaultEndpoint || 'http://localhost:11434'}
                 />
+                <p className="text-xs text-secondary mt-1">
+                  {config.provider === 'ollama'
+                    ? 'Make sure Ollama is running. Default: http://localhost:11434'
+                    : 'Enter the base URL of your OpenAI-compatible server.'}
+                </p>
               </div>
-              <Button onClick={handleTestKey} isLoading={isTesting} disabled={!apiKey || isTesting}>
-                Update & Test
+            )}
+
+            {/* API key input (for Gemini and optional for OpenAI-compat) */}
+            {(config.provider === 'gemini' || config.provider === 'openai-compat') && (
+              <div>
+                <Input
+                  label={config.provider === 'gemini' ? 'Gemini API Key' : 'API Key (optional)'}
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput((e.target as HTMLInputElement).value)}
+                  placeholder={config.provider === 'gemini' ? 'Paste your Gemini API key' : 'Leave blank if not required'}
+                />
+                {config.provider === 'gemini' && (
+                  <p className="text-xs text-secondary mt-1">
+                    Get a free key from{' '}
+                    <a href="#" className="text-accent hover:underline">Google AI Studio</a>.
+                  </p>
+                )}
+              </div>
+            )}
+
+            {/* Model selector */}
+            <div>
+              <label className="block text-sm font-medium text-secondary mb-1.5">Model</label>
+              <div className="flex gap-2">
+                {config.provider === 'gemini' ? (
+                  <select
+                    className="input-field flex-1"
+                    value={config.model || 'gemini-2.0-flash'}
+                    onChange={e => setConfig(prev => ({ ...prev, model: e.target.value }))}
+                  >
+                    <option value="gemini-2.0-flash">Gemini 2.0 Flash</option>
+                    <option value="gemini-2.5-flash">Gemini 2.5 Flash</option>
+                    <option value="gemini-2.5-pro">Gemini 2.5 Pro</option>
+                  </select>
+                ) : models.length > 0 ? (
+                  <select
+                    className="input-field flex-1"
+                    value={config.model || ''}
+                    onChange={e => setConfig(prev => ({ ...prev, model: e.target.value }))}
+                  >
+                    {!config.model && <option value="">Select a model...</option>}
+                    {models.map(m => (
+                      <option key={m} value={m}>{m}</option>
+                    ))}
+                  </select>
+                ) : (
+                  <Input
+                    value={config.model || ''}
+                    onChange={e => setConfig(prev => ({ ...prev, model: (e.target as HTMLInputElement).value }))}
+                    placeholder={config.provider === 'ollama' ? 'e.g. llama3.2' : 'e.g. default'}
+                  />
+                )}
+                {config.provider !== 'gemini' && (
+                  <button
+                    className="p-2.5 rounded-lg bg-surface border border-subtle hover:bg-accent/10 text-muted hover:text-accent transition-colors"
+                    onClick={handleRefreshModels}
+                    disabled={isLoadingModels}
+                    title="Refresh models"
+                  >
+                    <RefreshCw className={`w-4 h-4 ${isLoadingModels ? 'animate-spin' : ''}`} />
+                  </button>
+                )}
+              </div>
+              {isLoadingModels && (
+                <p className="text-xs text-accent mt-1 flex items-center gap-1">
+                  <Loader2 className="w-3 h-3 animate-spin" /> Fetching available models...
+                </p>
+              )}
+            </div>
+
+            {/* Connection status */}
+            {connectionStatus !== 'idle' && (
+              <div className={`flex items-center gap-2 p-3 rounded-lg text-sm ${
+                connectionStatus === 'success'
+                  ? 'bg-success/10 text-success border border-success/20'
+                  : 'bg-danger/10 text-danger border border-danger/20'
+              }`}>
+                {connectionStatus === 'success'
+                  ? <><CheckCircle className="w-4 h-4" /> Connection successful!</>
+                  : <><XCircle className="w-4 h-4" /> Connection failed. Check your settings.</>
+                }
+              </div>
+            )}
+
+            {/* Action buttons */}
+            <div className="flex gap-3 pt-2">
+              <Button variant="outline" onClick={handleTestConnection} isLoading={isTesting}>
+                Test Connection
+              </Button>
+              <Button onClick={handleSave} isLoading={isSaving}>
+                Save Settings
               </Button>
             </div>
-            <p className="text-xs text-secondary mt-2">
-              Don't have a key? Get one for free from <a href="#" onClick={(e) => {
-                e.preventDefault()
-                // Would normally open in system browser here
-              }} className="text-accent hover:underline">Google AI Studio</a>.
-            </p>
           </Card>
         </section>
 

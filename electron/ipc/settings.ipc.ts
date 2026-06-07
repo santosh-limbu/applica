@@ -5,7 +5,14 @@
 import { ipcMain, app } from 'electron';
 import * as db from '../services/database.service';
 import * as storage from '../services/storage.service';
-import { testConnection } from '../services/ai.service';
+import {
+  testConnection,
+  testProviderConnection,
+  listProviderModels,
+  getProviderConfig,
+  saveProviderConfig,
+} from '../services/ai.service';
+import { AVAILABLE_PROVIDERS, type ProviderConfig } from '../services/ai-provider.interface';
 
 export function registerSettingsHandlers(): void {
   // ── App Settings (key-value store) ───────────────────────────
@@ -54,6 +61,53 @@ export function registerSettingsHandlers(): void {
     } catch (err) {
       console.error('[IPC:testApiKey]', err);
       return false;
+    }
+  });
+
+  // ── AI Provider Management ───────────────────────────────────
+
+  ipcMain.handle('getAvailableProviders', () => {
+    return AVAILABLE_PROVIDERS;
+  });
+
+  ipcMain.handle('getProviderConfig', () => {
+    try {
+      const config = getProviderConfig();
+      // Never leak API keys to the renderer — mask them
+      return {
+        ...config,
+        apiKey: config.apiKey ? '••••••••' : undefined,
+      };
+    } catch (err) {
+      console.error('[IPC:getProviderConfig]', err);
+      return { provider: 'ollama', endpoint: 'http://localhost:11434' };
+    }
+  });
+
+  ipcMain.handle('saveProviderConfig', (_event, config: ProviderConfig) => {
+    try {
+      saveProviderConfig(config);
+    } catch (err) {
+      console.error('[IPC:saveProviderConfig]', err);
+      throw new Error(`Failed to save provider config: ${(err as Error).message}`);
+    }
+  });
+
+  ipcMain.handle('testProviderConnection', async (_event, config: ProviderConfig) => {
+    try {
+      return await testProviderConnection(config);
+    } catch (err) {
+      console.error('[IPC:testProviderConnection]', err);
+      return false;
+    }
+  });
+
+  ipcMain.handle('listProviderModels', async (_event, config: ProviderConfig) => {
+    try {
+      return await listProviderModels(config);
+    } catch (err) {
+      console.error('[IPC:listProviderModels]', err);
+      return [];
     }
   });
 

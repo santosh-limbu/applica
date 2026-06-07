@@ -119,6 +119,22 @@ export interface ScrapedJob {
   url: string
 }
 
+export interface ProviderConfig {
+  provider: 'gemini' | 'ollama' | 'openai-compat'
+  apiKey?: string
+  endpoint?: string
+  model?: string
+}
+
+export interface ProviderInfo {
+  id: 'gemini' | 'ollama' | 'openai-compat'
+  name: string
+  description: string
+  defaultEndpoint?: string
+  requiresApiKey: boolean
+  icon: string
+}
+
 export interface GeneratedCV {
   title: string
   professional_summary: string
@@ -144,6 +160,11 @@ export interface ElectronAPI {
   saveApiKey: (key: string) => Promise<void>
   getApiKey: () => Promise<string | null>
   testApiKey: (key: string) => Promise<boolean>
+  getAvailableProviders: () => Promise<ProviderInfo[]>
+  getProviderConfig: () => Promise<ProviderConfig>
+  saveProviderConfig: (config: ProviderConfig) => Promise<void>
+  testProviderConnection: (config: ProviderConfig) => Promise<boolean>
+  listProviderModels: (config: ProviderConfig) => Promise<string[]>
   getProfile: () => Promise<Profile | null>
   saveProfile: (profile: Profile) => Promise<Profile>
   getExperiences: (profileId: number) => Promise<Experience[]>

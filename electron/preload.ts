@@ -18,6 +18,13 @@ contextBridge.exposeInMainWorld('api', {
   getApiKey: () => ipcRenderer.invoke('getApiKey'),
   testApiKey: (key: string) => ipcRenderer.invoke('testApiKey', key),
 
+  // ── AI Provider Management ──────────────────────────────────
+  getAvailableProviders: () => ipcRenderer.invoke('getAvailableProviders'),
+  getProviderConfig: () => ipcRenderer.invoke('getProviderConfig'),
+  saveProviderConfig: (config: any) => ipcRenderer.invoke('saveProviderConfig', config),
+  testProviderConnection: (config: any) => ipcRenderer.invoke('testProviderConnection', config),
+  listProviderModels: (config: any) => ipcRenderer.invoke('listProviderModels', config),
+
   // ── Profile ──────────────────────────────────────────────────
   getProfile: () => ipcRenderer.invoke('getProfile'),
   saveProfile: (profile: any) => ipcRenderer.invoke('saveProfile', profile),
