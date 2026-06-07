@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+out/
+dist/
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Editor & OS
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Debug logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Encrypted keys (user secrets)
+*.enc
+
+# Electron builder output
+release/

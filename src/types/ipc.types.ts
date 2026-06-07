@@ -1,0 +1,178 @@
+export interface Profile {
+  id?: number
+  full_name: string
+  email?: string
+  phone?: string
+  location?: string
+  linkedin_url?: string
+  portfolio_url?: string
+  professional_summary?: string
+  writing_samples?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface Experience {
+  id?: number
+  profile_id: number
+  company: string
+  role: string
+  start_date: string
+  end_date?: string
+  location?: string
+  description?: string
+  achievements?: string // JSON array
+  sort_order?: number
+}
+
+export interface Education {
+  id?: number
+  profile_id: number
+  institution: string
+  degree: string
+  field_of_study?: string
+  start_date?: string
+  end_date?: string
+  grade?: string
+  description?: string
+  sort_order?: number
+}
+
+export interface Skill {
+  id?: number
+  profile_id: number
+  name: string
+  category?: string
+  proficiency?: string
+}
+
+export interface Certification {
+  id?: number
+  profile_id: number
+  name: string
+  issuer?: string
+  date_obtained?: string
+  expiry_date?: string
+  credential_url?: string
+}
+
+export interface Application {
+  id?: number
+  profile_id: number
+  company: string
+  role_title: string
+  job_description?: string
+  job_url?: string
+  status?: 'draft' | 'applied' | 'interview' | 'rejected' | 'offer' | 'accepted' | 'withdrawn'
+  applied_date?: string
+  salary_range?: string
+  recruiter_name?: string
+  recruiter_email?: string
+  notes?: string
+  ats_score?: number
+  ai_analysis?: string
+  created_at?: string
+  updated_at?: string
+}
+
+export interface CV {
+  id?: number
+  application_id?: number
+  profile_id: number
+  title: string
+  template_id: string
+  content: string // TipTap JSON
+  version?: number
+  is_latest?: number
+}
+
+export interface JobAnalysis {
+  role_title: string
+  company: string
+  required_skills: string[]
+  preferred_skills: string[]
+  experience_level: string
+  key_responsibilities: string[]
+  qualifications: string[]
+  keywords: string[]
+  salary_range?: string
+  location?: string
+}
+
+export interface ATSScore {
+  overall_score: number
+  keyword_match: number
+  experience_match: number
+  skills_match: number
+  education_match: number
+  suggestions: string[]
+  missing_keywords: string[]
+  strong_matches: string[]
+}
+
+export interface ScrapedJob {
+  title: string
+  company: string
+  description: string
+  salary?: string
+  location?: string
+  url: string
+}
+
+export interface GeneratedCV {
+  title: string
+  professional_summary: string
+  sections: CVSection[]
+}
+
+export interface CVSection {
+  type: 'experience' | 'education' | 'skills' | 'certifications' | 'summary'
+  title: string
+  items: any[]
+}
+
+// Extend Window for IPC
+declare global {
+  interface Window {
+    api: ElectronAPI
+  }
+}
+
+export interface ElectronAPI {
+  getSettings: (key: string) => Promise<string | null>
+  setSettings: (key: string, value: string) => Promise<void>
+  saveApiKey: (key: string) => Promise<void>
+  getApiKey: () => Promise<string | null>
+  testApiKey: (key: string) => Promise<boolean>
+  getProfile: () => Promise<Profile | null>
+  saveProfile: (profile: Profile) => Promise<Profile>
+  getExperiences: (profileId: number) => Promise<Experience[]>
+  saveExperience: (exp: Experience) => Promise<Experience>
+  deleteExperience: (id: number) => Promise<void>
+  getEducation: (profileId: number) => Promise<Education[]>
+  saveEducation: (edu: Education) => Promise<Education>
+  deleteEducation: (id: number) => Promise<void>
+  getSkills: (profileId: number) => Promise<Skill[]>
+  saveSkill: (skill: Skill) => Promise<Skill>
+  deleteSkill: (id: number) => Promise<void>
+  getCertifications: (profileId: number) => Promise<Certification[]>
+  saveCertification: (cert: Certification) => Promise<Certification>
+  deleteCertification: (id: number) => Promise<void>
+  getApplications: () => Promise<Application[]>
+  getApplication: (id: number) => Promise<Application | null>
+  saveApplication: (app: Application) => Promise<Application>
+  updateApplicationStatus: (id: number, status: string) => Promise<void>
+  deleteApplication: (id: number) => Promise<void>
+  analyzeJob: (description: string) => Promise<JobAnalysis>
+  generateCV: (applicationId: number, templateId: string) => Promise<GeneratedCV>
+  generateCoverLetter: (applicationId: number) => Promise<string>
+  scoreATS: (cvContent: string, jobDescription: string) => Promise<ATSScore>
+  scrapeJobUrl: (url: string) => Promise<ScrapedJob>
+  exportPDF: (html: string, fileName: string) => Promise<string>
+  exportDOCX: (cvData: any, templateId: string, fileName: string) => Promise<string>
+  saveCv: (cv: CV) => Promise<CV>
+  getCvs: (applicationId: number) => Promise<CV[]>
+  showSaveDialog: (defaultName: string, filters: any[]) => Promise<string | null>
+  isFirstRun: () => Promise<boolean>
+  getAppVersion: () => string
+}
