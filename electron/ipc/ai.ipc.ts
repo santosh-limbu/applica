@@ -7,20 +7,12 @@ import * as ai from '../services/ai.service';
 import * as db from '../services/database.service';
 import * as storage from '../services/storage.service';
 
-function requireApiKey(): string {
-  const key = storage.getApiKey();
-  if (!key) {
-    throw new Error('No API key configured. Please add your Gemini API key in Settings.');
-  }
-  return key;
-}
-
 export function registerAiHandlers(): void {
   // ── Analyse Job Description ──────────────────────────────────
 
   ipcMain.handle('analyzeJob', async (_event, description: string) => {
     try {
-      const apiKey = requireApiKey();
+      const apiKey = storage.getApiKey() || '';
       return await ai.analyzeJob(apiKey, description);
     } catch (err) {
       console.error('[IPC:analyzeJob]', err);
@@ -32,7 +24,7 @@ export function registerAiHandlers(): void {
 
   ipcMain.handle('generateCV', async (_event, applicationId: number, templateId: string) => {
     try {
-      const apiKey = requireApiKey();
+      const apiKey = storage.getApiKey() || '';
 
       const application = db.getApplicationById(applicationId);
       if (!application) throw new Error('Application not found');
@@ -94,7 +86,7 @@ export function registerAiHandlers(): void {
 
   ipcMain.handle('generateCoverLetter', async (_event, applicationId: number) => {
     try {
-      const apiKey = requireApiKey();
+      const apiKey = storage.getApiKey() || '';
 
       const application = db.getApplicationById(applicationId);
       if (!application) throw new Error('Application not found');
@@ -142,7 +134,7 @@ export function registerAiHandlers(): void {
     'scoreATS',
     async (_event, cvContent: string, jobDescription: string) => {
       try {
-        const apiKey = requireApiKey();
+        const apiKey = storage.getApiKey() || '';
         return await ai.scoreATS(apiKey, cvContent, jobDescription);
       } catch (err) {
         console.error('[IPC:scoreATS]', err);
