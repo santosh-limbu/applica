@@ -5,8 +5,12 @@
 import { app, BrowserWindow, shell } from 'electron';
 import { join } from 'path';
 import { is } from '@electron-toolkit/utils';
+import * as dns from 'dns';
 import { initDatabase, closeDatabase } from './services/database.service';
 import { registerAllHandlers } from './ipc/index';
+
+// Prioritise IPv4 resolution for localhost to prevent ECONNREFUSED with local AI services (Ollama/LM Studio) on Windows
+dns.setDefaultResultOrder('ipv4first');
 
 let mainWindow: BrowserWindow | null = null;
 

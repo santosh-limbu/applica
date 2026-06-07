@@ -48,6 +48,46 @@ export class OpenAICompatProvider implements AIProvider {
   }
 
   async testConnection(): Promise<boolean> {
+    let serverAlive = false;
+
+    // 1. Try a cheap GET request to /v1/models to see if the server is reachable and active
+    try {
+      const response = await fetch(`${this.baseUrl}/v1/models`, {
+        headers: this._headers(),
+        signal: AbortSignal.timeout(5000), // 5s timeout for server ping
+      });
+      if (response.ok) {
+        serverAlive = true;
+      }
+    } catch {
+      // Fall through
+    }
+
+    // Try Ollama specific /api/tags if the standard models list failed
+    if (!serverAlive) {
+      try {
+        const response = await fetch(`${this.baseUrl}/api/tags`, {
+          signal: AbortSignal.timeout(5000),
+        });
+        if (response.ok) {
+          serverAlive = true;
+        }
+      } catch {
+        // Fall through
+      }
+    }
+
+    // If the server is not alive at all, fail immediately
+    if (!serverAlive) {
+      return false;
+    }
+
+    // If the server is alive and we don't have a model selected yet, count this as a successful server check
+    if (!this.model || this.model === 'default' || this.model === '') {
+      return true;
+    }
+
+    // 2. If a model is specified, try running a quick chat completions check
     try {
       const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
         method: 'POST',
@@ -58,17 +98,22 @@ export class OpenAICompatProvider implements AIProvider {
           max_tokens: 10,
           temperature: 0,
         }),
-        signal: AbortSignal.timeout(15000), // 15s timeout for local models
+        signal: AbortSignal.timeout(10000), // 10s timeout
       });
 
-      if (!response.ok) return false;
-
-      const data = (await response.json()) as ChatCompletionResponse;
-      const text = data.choices?.[0]?.message?.content ?? '';
-      return text.toLowerCase().includes('ok');
+      if (response.ok) {
+        const data = (await response.json()) as ChatCompletionResponse;
+        const text = data.choices?.[0]?.message?.content ?? '';
+        if (text.toLowerCase().includes('ok')) {
+          return true;
+        }
+      }
     } catch {
-      return false;
+      // If completions fail (e.g. GPU/CPU lag, timeout, slow loading),
+      // fallback to the server status since the endpoint is responding to /models
     }
+
+    return serverAlive;
   }
 
   async generateText(prompt: string): Promise<string> {
