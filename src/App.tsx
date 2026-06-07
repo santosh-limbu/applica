@@ -10,7 +10,6 @@ import ProfileSetup from '@/pages/Onboarding/ProfileSetup'
 import DashboardPage from '@/pages/Dashboard/DashboardPage'
 import JobInput from '@/pages/NewApplication/JobInput'
 import JobAnalysis from '@/pages/NewApplication/JobAnalysis'
-import { SettingsPage } from '@/pages/Settings/SettingsPage'
 import { EditorPage } from '@/pages/Editor/EditorPage'
 import { CoverLetterPage } from '@/pages/CoverLetter/CoverLetterPage'
 
@@ -66,7 +65,6 @@ export default function App() {
     dashboard: <DashboardPage />,
     'new-application': <JobInput />,
     'job-analysis': <JobAnalysis />,
-    settings: <SettingsPage />,
     editor: <EditorPage />,
     'cover-letter': <CoverLetterPage />,
   }
