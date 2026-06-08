@@ -4,7 +4,7 @@
 import type { Education } from "../src/types/ipc.types";
 
 import { contextBridge, ipcRenderer } from 'electron';
-import type { Application } from './types';
+import type { Application, Experience } from './types';
 
 // ── Exposed API ──────────────────────────────────────────────
 // Every method maps 1:1 to an ipcMain.handle() registered in electron/ipc/.
@@ -33,7 +33,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // ── Experience ───────────────────────────────────────────────
   getExperiences: (profileId: number) => ipcRenderer.invoke('getExperiences', profileId),
-  saveExperience: (exp: any) => ipcRenderer.invoke('saveExperience', exp),
+  saveExperience: (exp: Experience) => ipcRenderer.invoke('saveExperience', exp),
   deleteExperience: (id: number) => ipcRenderer.invoke('deleteExperience', id),
 
   // ── Education ────────────────────────────────────────────────
