@@ -3,6 +3,7 @@
 // ============================================================
 
 import { contextBridge, ipcRenderer } from 'electron';
+import type { Application } from './types';
 
 // ── Exposed API ──────────────────────────────────────────────
 // Every method maps 1:1 to an ipcMain.handle() registered in electron/ipc/.
@@ -52,7 +53,7 @@ contextBridge.exposeInMainWorld('api', {
   // ── Applications ─────────────────────────────────────────────
   getApplications: () => ipcRenderer.invoke('getApplications'),
   getApplication: (id: number) => ipcRenderer.invoke('getApplication', id),
-  saveApplication: (application: any) => ipcRenderer.invoke('saveApplication', application),
+  saveApplication: (application: Application) => ipcRenderer.invoke('saveApplication', application),
   updateApplicationStatus: (id: number, status: string) =>
     ipcRenderer.invoke('updateApplicationStatus', id, status),
   deleteApplication: (id: number) => ipcRenderer.invoke('deleteApplication', id),
