@@ -1,5 +1,6 @@
 import { create } from 'zustand'
 import type { Profile, Experience, Education, Skill, Certification } from '@/types/ipc.types'
+import { useAppStore } from './app.store'
 
 interface ProfileState {
   profile: Profile | null
@@ -50,6 +51,14 @@ export const useProfileStore = create<ProfileState>((set, get) => ({
           get().loadCertifications(),
         ])
       }
+    } catch (error) {
+      useAppStore.getState().addToast({
+        type: 'error',
+        title: 'Error loading profile',
+        message: error instanceof Error ? error.message : 'Failed to load profile',
+      })
+      // rethrow to let callers know
+      throw error
     } finally {
       set({ isLoading: false })
     }
