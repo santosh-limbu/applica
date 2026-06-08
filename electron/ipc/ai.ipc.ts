@@ -124,7 +124,7 @@ export function registerAiHandlers(): void {
       return letter;
     } catch (err) {
       console.error('[IPC:generateCoverLetter]', err);
-      throw new Error(`Cover letter generation failed: ${(err as Error).message}`);
+      return { success: false, error: `Cover letter generation failed: ${(err as Error).message}` };
     }
   });
 
