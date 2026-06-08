@@ -6,6 +6,7 @@
   "author": "Applica",
   "license": "MIT",
   "scripts": {
+    "test": "vitest",
     "dev": "electron-vite dev",
     "build": "electron-vite build",
     "preview": "electron-vite preview",
