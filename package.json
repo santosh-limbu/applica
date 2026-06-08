@@ -14,7 +14,8 @@
     "start": "electron-vite preview",
     "build:win": "npm run build && electron-builder --win --config",
     "build:mac": "npm run build && electron-builder --mac --config",
-    "build:linux": "npm run build && electron-builder --linux --config"
+    "build:linux": "npm run build && electron-builder --linux --config",
+    "test": "vitest"
   },
   "dependencies": {
     "@google/generative-ai": "^0.24.0",
@@ -42,16 +43,17 @@
     "@electron-toolkit/preload": "^3.0.0",
     "@electron-toolkit/tsconfig": "^1.0.1",
     "@electron-toolkit/utils": "^4.0.0",
+    "@electron/rebuild": "^4.0.4",
     "@types/better-sqlite3": "^7.6.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.3.0",
     "electron": "^39.8.10",
     "electron-builder": "^25.1.8",
-    "@electron/rebuild": "^4.0.4",
     "electron-vite": "^3.0.0",
     "typescript": "^5.7.0",
-    "vite": "^6.0.0"
+    "vite": "^6.0.0",
+    "vitest": "^4.1.8"
   },
   "build": {
     "appId": "com.applica.app",
@@ -64,15 +66,21 @@
       "!node_modules"
     ],
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "build/icon.ico"
     },
     "mac": {
-      "target": ["dmg"],
+      "target": [
+        "dmg"
+      ],
       "icon": "build/icon.icns"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "build/icon.png"
     },
     "nsis": {
