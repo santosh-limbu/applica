@@ -3,7 +3,6 @@ import {
   LayoutDashboard,
   PlusCircle,
   Search,
-  Filter,
   FileText,
   Trash2,
   MoreHorizontal,
