@@ -1,9 +1,7 @@
 import { useEffect, useState, useMemo } from 'react'
 import {
-  LayoutDashboard,
   PlusCircle,
   Search,
-  Filter,
   FileText,
   Trash2,
   MoreHorizontal,
