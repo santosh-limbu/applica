@@ -1,6 +1,7 @@
 // ============================================================
 // Applica — Preload Script (Context Bridge)
 // ============================================================
+import type { Education } from "../src/types/ipc.types";
 
 import { contextBridge, ipcRenderer } from 'electron';
 
@@ -36,7 +37,7 @@ contextBridge.exposeInMainWorld('api', {
 
   // ── Education ────────────────────────────────────────────────
   getEducation: (profileId: number) => ipcRenderer.invoke('getEducation', profileId),
-  saveEducation: (edu: any) => ipcRenderer.invoke('saveEducation', edu),
+  saveEducation: (edu: Education) => ipcRenderer.invoke('saveEducation', edu),
   deleteEducation: (id: number) => ipcRenderer.invoke('deleteEducation', id),
 
   // ── Skills ───────────────────────────────────────────────────
