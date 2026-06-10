@@ -40,9 +40,7 @@ export async function exportPDF(html: string, outputPath: string): Promise<strin
     await delay(300);
 
     const pdfBuffer = await win.webContents.printToPDF({
-      marginsType: 0,
       printBackground: true,
-      printSelectionOnly: false,
       landscape: false,
       pageSize: 'A4',
       margins: {

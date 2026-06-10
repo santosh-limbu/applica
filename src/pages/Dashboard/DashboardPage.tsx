@@ -30,7 +30,7 @@ const statusFilters = [
   'withdrawn',
 ] as const
 
-const statusOptions: Application['status'][] = [
+const statusOptions: Exclude<Application['status'], undefined>[] = [
   'draft',
   'applied',
   'interview',
@@ -118,7 +118,7 @@ export default function DashboardPage() {
         </Button>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '340px 1fr', gap: '24px', alignItems: 'start' }}>
+      <div className="dashboard-layout">
         {/* Left Column: Profile widget */}
         <ProfilePanel />
 

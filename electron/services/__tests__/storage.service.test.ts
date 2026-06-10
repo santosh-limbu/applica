@@ -23,7 +23,7 @@ vi.mock('fs');
 describe('Storage Service', () => {
   const mockPath = path.join('/mock/user/data/path', 'api-key.enc');
 
-  let electronMock;
+  let electronMock: any;
 
   beforeEach(async () => {
     vi.clearAllMocks();

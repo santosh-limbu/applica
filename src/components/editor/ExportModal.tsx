@@ -5,6 +5,8 @@ import Modal from '@/components/ui/Modal'
 import { FileText, FileDown } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import { useEditorStore } from '@/stores/editor.store'
+import { useProfileStore } from '@/stores/profile.store'
+import { useApplicationStore } from '@/stores/application.store'
 
 interface ExportModalProps {
   isOpen: boolean
@@ -17,20 +19,33 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, appli
   const [isExporting, setIsExporting] = useState(false)
   const { addToast } = useAppStore()
   const { content, templateId } = useEditorStore()
+  const { currentApplication } = useApplicationStore()
 
   const handleExport = async () => {
     setIsExporting(true)
     try {
-      const defaultName = `CV_${new Date().toISOString().split('T')[0]}.${exportFormat}`
-      
-      const filePath = await window.api.showSaveDialog(defaultName, [
-        { name: exportFormat === 'pdf' ? 'PDF Documents' : 'Word Documents', extensions: [exportFormat] }
-      ])
-      
-      if (!filePath) {
-        setIsExporting(false)
-        return // User cancelled
+      const outputDir = await window.api.getSettings('output_directory')
+      let filePath: string | null = null
+      let fileName = ''
+
+      if (outputDir) {
+        const company = currentApplication?.company || 'Applica'
+        const role = currentApplication?.role_title || 'CV'
+        const sanitize = (str: string) => str.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+        fileName = `CV_${sanitize(company)}_${sanitize(role)}.${exportFormat}`
+      } else {
+        const defaultName = `CV_${new Date().toISOString().split('T')[0]}.${exportFormat}`
+        filePath = await window.api.showSaveDialog(defaultName, [
+          { name: exportFormat === 'pdf' ? 'PDF Documents' : 'Word Documents', extensions: [exportFormat] }
+        ])
+        
+        if (!filePath) {
+          setIsExporting(false)
+          return // User cancelled
+        }
       }
+
+      let savedPath: string | null = null
 
       if (exportFormat === 'pdf') {
         // Build the HTML wrapper around the content
@@ -50,13 +65,52 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, appli
             </body>
           </html>
         `
-        await window.api.exportPDF(fullHtml, filePath)
+        if (outputDir) {
+          savedPath = await window.api.exportPDF(fullHtml, fileName, outputDir)
+        } else {
+          savedPath = await window.api.exportPDF(fullHtml, filePath!)
+        }
       } else {
-        // For DOCX, we send the content JSON/HTML to the backend which uses the docx package
-        await window.api.exportDOCX(content, templateId, filePath)
+        // For DOCX, we send structured CV data to the backend
+        const profileState = useProfileStore.getState()
+        const cvData = {
+          profile: profileState.profile || { full_name: 'Candidate Name' },
+          experiences: profileState.experiences || [],
+          education: profileState.education || [],
+          skills: profileState.skills || [],
+          certifications: profileState.certifications || [],
+          professional_summary: profileState.profile?.professional_summary || ''
+        }
+
+        if (outputDir) {
+          savedPath = await window.api.exportDOCX(cvData, templateId, fileName, outputDir)
+        } else {
+          savedPath = await window.api.exportDOCX(cvData, templateId, filePath!)
+        }
       }
       
-      addToast({ title: 'Export Successful', message: `Saved to ${filePath}`, type: 'success' })
+      if (savedPath) {
+        if (outputDir) {
+          addToast({
+            title: 'Export Successful',
+            message: (
+              <span>
+                Saved directly to the output folder.{' '}
+                <button
+                  onClick={() => window.api.openPath(outputDir)}
+                  className="text-accent hover:underline font-semibold animate-pulse"
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline' }}
+                >
+                  Open Folder
+                </button>
+              </span>
+            ),
+            type: 'success'
+          })
+        } else {
+          addToast({ title: 'Export Successful', message: `Saved to ${savedPath}`, type: 'success' })
+        }
+      }
       onClose()
     } catch (e: any) {
       addToast({ title: 'Export Failed', message: e.message || 'An error occurred during export', type: 'error' })
@@ -68,7 +122,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, appli
   if (!isOpen) return null
 
   return (
-    <Modal title="Export Document" onClose={onClose}>
+    <Modal open={isOpen} title="Export Document" onClose={onClose}>
       <div className="flex flex-col gap-6 p-6">
         <p className="text-muted text-sm">Select a format to export your CV.</p>
         
@@ -102,7 +156,7 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, appli
 
         <div className="flex justify-end gap-3 mt-4 border-t border-subtle pt-4">
           <Button variant="ghost" onClick={onClose}>Cancel</Button>
-          <Button onClick={handleExport} isLoading={isExporting}>
+          <Button onClick={handleExport} loading={isExporting}>
             Export CV
           </Button>
         </div>

@@ -1,10 +1,11 @@
 import { create } from 'zustand'
+import type { ReactNode } from 'react'
 
 export interface Toast {
   id: string
   type: 'success' | 'error' | 'warning' | 'info'
   title: string
-  message?: string
+  message?: ReactNode
 }
 
 interface AppState {

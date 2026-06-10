@@ -13,7 +13,7 @@ describe('AI Config Service', () => {
 
   describe('getProviderConfig', () => {
     it('should return default ollama config when db settings are empty', () => {
-      vi.mocked(db.getSetting).mockReturnValue(undefined);
+      vi.mocked(db.getSetting).mockReturnValue(null);
 
       const config = aiService.getProviderConfig();
 
@@ -30,7 +30,7 @@ describe('AI Config Service', () => {
       vi.mocked(db.getSetting).mockImplementation((key) => {
         if (key === 'ai_provider') return 'gemini';
         if (key === 'ai_model') return 'gemini-2.0-flash';
-        return undefined;
+        return null;
       });
       vi.mocked(storage.getApiKey).mockReturnValue('test-gemini-key');
 
@@ -51,7 +51,7 @@ describe('AI Config Service', () => {
         if (key === 'ai_provider') return 'openai-compat';
         if (key === 'ai_endpoint') return 'http://localhost:1234';
         if (key === 'ai_api_key') return 'test-openai-key';
-        return undefined;
+        return null;
       });
 
       const config = aiService.getProviderConfig();

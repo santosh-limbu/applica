@@ -14,6 +14,7 @@ export interface Profile {
   portfolio_url?: string;
   professional_summary?: string;
   writing_samples?: string;
+  references?: string;
   created_at?: string;
   updated_at?: string;
 }
@@ -124,14 +125,18 @@ export interface JobAnalysis {
   role_title: string;
   company: string;
   seniority_level: string;
+  experience_level: string;
   required_skills: string[];
   preferred_skills: string[];
   required_experience_years: number;
   key_responsibilities: string[];
-  industry: string;
+  qualifications: string[];
   keywords: string[];
+  industry: string;
   tone: string;
   summary: string;
+  salary_range?: string;
+  location?: string;
 }
 
 export interface GeneratedCV {

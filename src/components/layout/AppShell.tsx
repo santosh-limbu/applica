@@ -15,7 +15,9 @@ export default function AppShell({ children }: AppShellProps) {
     <div className="app-shell">
       <div className="app-content">
         {/* Titlebar drag region for the content area */}
-        <div className="titlebar" />
+        <div className="titlebar">
+          <span className="titlebar-title">Applica</span>
+        </div>
 
         {/* Main scrollable content */}
         <main className="app-main">

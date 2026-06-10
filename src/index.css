@@ -224,6 +224,16 @@ p {
   z-index: 100;
   flex-shrink: 0;
   user-select: none;
+  background: #0f172a;
+  border-bottom: 1px solid var(--border-default);
+}
+
+.titlebar-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-secondary);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .titlebar-nodrag {
@@ -1462,5 +1472,21 @@ p {
 
 .settings-fab:active {
   transform: translateY(0) scale(0.95);
+}
+
+/* -------------------------
+   Dashboard Layout Grid (Responsive)
+   ------------------------- */
+.dashboard-layout {
+  display: grid;
+  grid-template-columns: 340px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+@media (max-width: 1024px) {
+  .dashboard-layout {
+    grid-template-columns: 1fr;
+  }
 }
 

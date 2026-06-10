@@ -72,18 +72,22 @@ contextBridge.exposeInMainWorld('api', {
   scrapeJobUrl: (url: string) => ipcRenderer.invoke('scrapeJobUrl', url),
 
   // ── Export ───────────────────────────────────────────────────
-  exportPDF: (html: string, fileName: string) =>
-    ipcRenderer.invoke('exportPDF', html, fileName),
-  exportDOCX: (cvData: any, templateId: string, fileName: string) =>
-    ipcRenderer.invoke('exportDOCX', cvData, templateId, fileName),
+  exportPDF: (html: string, fileName: string, outputDir?: string) =>
+    ipcRenderer.invoke('exportPDF', html, fileName, outputDir),
+  exportDOCX: (cvData: any, templateId: string, fileName: string, outputDir?: string) =>
+    ipcRenderer.invoke('exportDOCX', cvData, templateId, fileName, outputDir),
 
   // ── CVs ──────────────────────────────────────────────────────
   saveCv: (cv: any) => ipcRenderer.invoke('saveCv', cv),
   getCvs: (applicationId: number) => ipcRenderer.invoke('getCvs', applicationId),
+  saveCoverLetter: (cl: any) => ipcRenderer.invoke('saveCoverLetter', cl),
+  getCoverLetters: (applicationId: number) => ipcRenderer.invoke('getCoverLetters', applicationId),
 
   // ── File Dialogs ─────────────────────────────────────────────
   showSaveDialog: (defaultName: string, filters: any[]) =>
     ipcRenderer.invoke('showSaveDialog', defaultName, filters),
+  selectDirectory: () => ipcRenderer.invoke('selectDirectory'),
+  openPath: (path: string) => ipcRenderer.invoke('openPath', path),
 
   // ── App Info ─────────────────────────────────────────────────
   isFirstRun: () => ipcRenderer.invoke('isFirstRun'),

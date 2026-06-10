@@ -8,6 +8,7 @@ export interface Profile {
   portfolio_url?: string
   professional_summary?: string
   writing_samples?: string
+  references?: string
   created_at?: string
   updated_at?: string
 }
@@ -86,15 +87,31 @@ export interface CV {
   is_latest?: number
 }
 
+export interface CoverLetter {
+  id?: number
+  application_id?: number
+  profile_id: number
+  content: string
+  version?: number
+  is_latest?: number
+  created_at?: string
+  updated_at?: string
+}
+
 export interface JobAnalysis {
   role_title: string
   company: string
+  seniority_level: string
+  experience_level: string
   required_skills: string[]
   preferred_skills: string[]
-  experience_level: string
+  required_experience_years: number
   key_responsibilities: string[]
   qualifications: string[]
   keywords: string[]
+  industry: string
+  tone: string
+  summary: string
   salary_range?: string
   location?: string
 }
@@ -136,9 +153,11 @@ export interface ProviderInfo {
 }
 
 export interface GeneratedCV {
-  title: string
+  title?: string
   professional_summary: string
-  sections: CVSection[]
+  experiences?: any[]
+  skills_highlight?: string[]
+  content_html: string
 }
 
 export interface CVSection {
@@ -189,11 +208,15 @@ export interface ElectronAPI {
   generateCoverLetter: (applicationId: number) => Promise<string>
   scoreATS: (cvContent: string, jobDescription: string) => Promise<ATSScore>
   scrapeJobUrl: (url: string) => Promise<ScrapedJob>
-  exportPDF: (html: string, fileName: string) => Promise<string>
-  exportDOCX: (cvData: any, templateId: string, fileName: string) => Promise<string>
+  exportPDF: (html: string, fileName: string, outputDir?: string) => Promise<string | null>
+  exportDOCX: (cvData: any, templateId: string, fileName: string, outputDir?: string) => Promise<string | null>
   saveCv: (cv: CV) => Promise<CV>
   getCvs: (applicationId: number) => Promise<CV[]>
+  saveCoverLetter: (cl: CoverLetter) => Promise<CoverLetter>
+  getCoverLetters: (applicationId: number) => Promise<CoverLetter[]>
   showSaveDialog: (defaultName: string, filters: any[]) => Promise<string | null>
+  selectDirectory: () => Promise<string | null>
+  openPath: (path: string) => Promise<boolean>
   isFirstRun: () => Promise<boolean>
   getAppVersion: () => string
 }

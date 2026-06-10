@@ -11,7 +11,8 @@ import type {
   Skill,
   Certification,
   Application,
-  CV
+  CV,
+  CoverLetter
 } from '../types';
 
 export function registerDbHandlers(): void {
@@ -214,6 +215,26 @@ export function registerDbHandlers(): void {
       return db.getCvs(applicationId);
     } catch (err) {
       console.error('[IPC:getCvs]', err);
+      return [];
+    }
+  });
+
+  // ── Cover Letters ────────────────────────────────────────────
+
+  ipcMain.handle('saveCoverLetter', (_event, cl: CoverLetter) => {
+    try {
+      return db.saveCoverLetter(cl);
+    } catch (err) {
+      console.error('[IPC:saveCoverLetter]', err);
+      throw new Error(`Failed to save cover letter: ${(err as Error).message}`);
+    }
+  });
+
+  ipcMain.handle('getCoverLetters', (_event, applicationId: number) => {
+    try {
+      return db.getCoverLetters(applicationId);
+    } catch (err) {
+      console.error('[IPC:getCoverLetters]', err);
       return [];
     }
   });

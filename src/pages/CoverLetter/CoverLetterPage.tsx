@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
-import Modal from '@/components/ui/Modal'
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
-import { FileDown, RefreshCw, Wand2, ArrowLeft } from 'lucide-react'
-import { EditorContent, useEditor } from '@tiptap/react'
+import { FileDown, RefreshCw, Wand2, ArrowLeft, Copy, Save } from 'lucide-react'
+import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 
 export const CoverLetterPage: React.FC = () => {
@@ -13,9 +12,8 @@ export const CoverLetterPage: React.FC = () => {
   const { addToast, navigate } = useAppStore()
   
   const [isGenerating, setIsGenerating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const [content, setContent] = useState<string>('')
-  
-  // Note: we'd ideally load this from DB, but for now we generate dynamically
   
   const editor = useEditor({
     extensions: [StarterKit],
@@ -30,13 +28,31 @@ export const CoverLetterPage: React.FC = () => {
     },
   })
 
-  // We should fetch the cover letter if it exists, otherwise generate
+  // Load cover letter on mount / application change
+  useEffect(() => {
+    async function loadCoverLetter() {
+      if (currentApplication?.id) {
+        try {
+          const cls = await window.api.getCoverLetters(currentApplication.id)
+          if (cls && cls.length > 0) {
+            setContent(cls[0].content)
+          } else {
+            setContent('')
+          }
+        } catch (err) {
+          console.error('Failed to load cover letter:', err)
+        }
+      }
+    }
+    loadCoverLetter()
+  }, [currentApplication])
+
+  // fallback logic
   useEffect(() => {
     if (!currentApplication && applications.length > 0) {
-      // Just grab the first one for demo purposes if coming directly
       setCurrentApplication(applications[0])
     }
-  }, [currentApplication, applications])
+  }, [currentApplication, applications, setCurrentApplication])
 
   useEffect(() => {
     if (editor && content !== editor.getHTML()) {
@@ -52,18 +68,23 @@ export const CoverLetterPage: React.FC = () => {
     
     setIsGenerating(true)
     try {
-      // In a real flow, we'd fetch the job analysis and profile first
-      // Since ai.service handles this via IPC, we can just call the IPC method
       const generatedText = await window.api.generateCoverLetter(currentApplication.id)
       
-      // Convert plain text to basic HTML paragraphs
       const htmlContent = generatedText
         .split('\n\n')
         .map(p => `<p>${p}</p>`)
         .join('')
         
       setContent(htmlContent)
-      addToast({ title: 'Generated', message: 'Cover letter generated successfully', type: 'success' })
+
+      // Auto-save generated cover letter
+      await window.api.saveCoverLetter({
+        application_id: currentApplication.id,
+        profile_id: currentApplication.profile_id,
+        content: htmlContent
+      })
+
+      addToast({ title: 'Generated', message: 'Cover letter generated and saved successfully', type: 'success' })
     } catch (e: any) {
       addToast({ title: 'Generation Failed', message: e.message || 'Failed to generate cover letter', type: 'error' })
     } finally {
@@ -71,15 +92,54 @@ export const CoverLetterPage: React.FC = () => {
     }
   }
 
+  const handleSave = async () => {
+    if (!currentApplication?.id) return
+    setIsSaving(true)
+    try {
+      await window.api.saveCoverLetter({
+        application_id: currentApplication.id,
+        profile_id: currentApplication.profile_id,
+        content: content
+      })
+      addToast({ title: 'Saved', message: 'Cover letter saved successfully', type: 'success' })
+    } catch (e: any) {
+      addToast({ title: 'Error', message: 'Failed to save cover letter', type: 'error' })
+    } finally {
+      setIsSaving(false)
+    }
+  }
+
+  const handleCopy = async () => {
+    try {
+      const parser = new DOMParser()
+      const parsed = parser.parseFromString(content, 'text/html')
+      const paragraphs = Array.from(parsed.querySelectorAll('p')).map(p => p.textContent || '')
+      const plainText = paragraphs.length > 0 ? paragraphs.join('\n\n') : (parsed.body.textContent || '')
+      
+      await navigator.clipboard.writeText(plainText)
+      addToast({ title: 'Copied', message: 'Cover letter copied to clipboard', type: 'success' })
+    } catch (err: any) {
+      addToast({ title: 'Copy Failed', message: err.message || 'Failed to copy text', type: 'error' })
+    }
+  }
+
   const handleExport = async () => {
     try {
-      const defaultName = `CoverLetter_${currentApplication?.company || 'Applica'}.pdf`
-      
-      const filePath = await window.api.showSaveDialog(defaultName, [
-        { name: 'PDF Documents', extensions: ['pdf'] }
-      ])
-      
-      if (!filePath) return
+      const outputDir = await window.api.getSettings('output_directory')
+      let filePath: string | null = null
+      let fileName = ''
+
+      if (outputDir) {
+        const company = currentApplication?.company || 'Applica'
+        const sanitize = (str: string) => str.replace(/[^a-zA-Z0-9_-]/g, '_').replace(/_+/g, '_')
+        fileName = `CoverLetter_${sanitize(company)}.pdf`
+      } else {
+        const defaultName = `CoverLetter_${currentApplication?.company || 'Applica'}.pdf`
+        filePath = await window.api.showSaveDialog(defaultName, [
+          { name: 'PDF Documents', extensions: ['pdf'] }
+        ])
+        if (!filePath) return
+      }
       
       const fullHtml = `
         <!DOCTYPE html>
@@ -87,8 +147,8 @@ export const CoverLetterPage: React.FC = () => {
           <head>
             <meta charset="UTF-8">
             <style>
-              body { margin: 0; padding: 2cm; font-family: 'Inter', sans-serif; font-size: 11pt; line-height: 1.5; }
-              p { margin-bottom: 1em; }
+               body { margin: 0; padding: 2cm; font-family: 'Inter', sans-serif; font-size: 11pt; line-height: 1.5; }
+               p { margin-bottom: 1em; }
             </style>
           </head>
           <body>
@@ -96,8 +156,36 @@ export const CoverLetterPage: React.FC = () => {
           </body>
         </html>
       `
-      await window.api.exportPDF(fullHtml, filePath)
-      addToast({ title: 'Export Successful', message: `Saved to ${filePath}`, type: 'success' })
+
+      let savedPath: string | null = null
+      if (outputDir) {
+        savedPath = await window.api.exportPDF(fullHtml, fileName, outputDir)
+      } else {
+        savedPath = await window.api.exportPDF(fullHtml, filePath!)
+      }
+
+      if (savedPath) {
+        if (outputDir) {
+          addToast({
+            title: 'Export Successful',
+            message: (
+              <span>
+                Saved directly to the output folder.{' '}
+                <button
+                  onClick={() => window.api.openPath(outputDir)}
+                  className="text-accent hover:underline font-semibold animate-pulse"
+                  style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'inline' }}
+                >
+                  Open Folder
+                </button>
+              </span>
+            ),
+            type: 'success'
+          })
+        } else {
+          addToast({ title: 'Export Successful', message: `Saved to ${savedPath}`, type: 'success' })
+        }
+      }
     } catch (e: any) {
       addToast({ title: 'Export Failed', message: e.message || 'An error occurred during export', type: 'error' })
     }
@@ -118,10 +206,20 @@ export const CoverLetterPage: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-4">
-          <Button variant="outline" onClick={handleGenerate} isLoading={isGenerating}>
+          <Button variant="outline" onClick={handleGenerate} loading={isGenerating}>
             <Wand2 className="w-4 h-4 mr-2 inline" /> 
             {content ? 'Regenerate' : 'Generate with AI'}
           </Button>
+          {content && (
+            <>
+              <Button variant="outline" onClick={handleSave} loading={isSaving}>
+                <Save className="w-4 h-4 mr-2 inline" /> Save Letter
+              </Button>
+              <Button variant="outline" onClick={handleCopy}>
+                <Copy className="w-4 h-4 mr-2 inline" /> Copy to Clipboard
+              </Button>
+            </>
+          )}
           <Button onClick={handleExport} disabled={!content}>
             <FileDown className="w-4 h-4 mr-2 inline" /> Export PDF
           </Button>

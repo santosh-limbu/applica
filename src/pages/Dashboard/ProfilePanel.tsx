@@ -75,6 +75,7 @@ export default function ProfilePanel() {
     linkedin_url: '',
     portfolio_url: '',
     professional_summary: '',
+    references: '',
   })
 
   // Sync personal info state
@@ -88,6 +89,7 @@ export default function ProfilePanel() {
         linkedin_url: profile.linkedin_url || '',
         portfolio_url: profile.portfolio_url || '',
         professional_summary: profile.professional_summary || '',
+        references: profile.references || '',
       })
     }
   }, [profile])
@@ -315,7 +317,7 @@ export default function ProfilePanel() {
         </div>
 
         {/* Tab Content area */}
-        <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4 text-sm" style={{ maxH: 'calc(100vh - 350px)' }}>
+        <div className="p-4 overflow-y-auto flex-1 flex flex-col gap-4 text-sm" style={{ maxHeight: 'calc(100vh - 350px)' }}>
           {/* TAB 1: About & Skills */}
           {activeTab === 'about' && (
             <>
@@ -328,6 +330,18 @@ export default function ProfilePanel() {
                   </p>
                 ) : (
                   <p className="text-tertiary text-xs italic">No professional summary added yet. Click edit above to add one.</p>
+                )}
+              </div>
+
+              {/* References */}
+              <div>
+                <h4 className="font-semibold text-secondary uppercase tracking-wider text-xs mb-2">References</h4>
+                {profile?.references ? (
+                  <p className="text-secondary leading-relaxed text-xs whitespace-pre-wrap bg-surface p-3 rounded-lg border border-default">
+                    {profile.references}
+                  </p>
+                ) : (
+                  <p className="text-tertiary text-xs italic">No reference info added yet. Click edit above to add references.</p>
                 )}
               </div>
 
@@ -587,6 +601,14 @@ export default function ProfilePanel() {
             value={personalForm.professional_summary}
             onChange={(e) => setPersonalForm({ ...personalForm, professional_summary: e.target.value })}
             placeholder="Summarize your professional background..."
+          />
+          <Input
+            label="References"
+            multiline
+            rows={4}
+            value={personalForm.references}
+            onChange={(e) => setPersonalForm({ ...personalForm, references: e.target.value })}
+            placeholder="Jane Smith, Director of Engineering at Acme Corp (jane.smith@acme.com) or 'References available upon request'..."
           />
         </div>
       </Modal>

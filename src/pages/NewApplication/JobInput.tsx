@@ -8,6 +8,7 @@ import {
   Building2,
   Briefcase,
   Sparkles,
+  ArrowLeft,
 } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
@@ -87,9 +88,14 @@ export default function JobInput() {
 
   return (
     <>
-      <div className="page-header">
-        <h1 className="page-title">New Application</h1>
-        <p className="page-subtitle">Enter a job description to get started</p>
+      <div className="page-header flex items-center gap-3">
+        <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} />} onClick={() => navigate('dashboard')}>
+          Back
+        </Button>
+        <div>
+          <h1 className="page-title" style={{ margin: 0 }}>New Application</h1>
+          <p className="page-subtitle" style={{ margin: 0 }}>Enter a job description to get started</p>
+        </div>
       </div>
 
       {/* Tab switcher */}

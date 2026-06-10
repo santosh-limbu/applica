@@ -6,7 +6,7 @@ import { useAppStore } from '@/stores/app.store'
 import type { ProviderConfig, ProviderInfo } from '@/types/ipc.types'
 import {
   Settings, Key, Palette, HardDrive, AlertTriangle,
-  Monitor, Plug, Sparkles, CheckCircle, XCircle, Loader2, RefreshCw
+  Monitor, Plug, Sparkles, CheckCircle, XCircle, Loader2, RefreshCw, Folder
 } from 'lucide-react'
 
 const PROVIDER_ICONS: Record<string, React.ReactNode> = {
@@ -27,17 +27,20 @@ export const SettingsPage: React.FC = () => {
   const [isLoadingModels, setIsLoadingModels] = useState(false)
   const [connectionStatus, setConnectionStatus] = useState<'idle' | 'success' | 'error'>('idle')
   const [isSaving, setIsSaving] = useState(false)
+  const [outputDirectory, setOutputDirectory] = useState<string | null>(null)
 
   // Load provider info on mount
   useEffect(() => {
     const load = async () => {
       try {
-        const [availableProviders, savedConfig] = await Promise.all([
+        const [availableProviders, savedConfig, savedOutputDir] = await Promise.all([
           window.api.getAvailableProviders(),
           window.api.getProviderConfig(),
+          window.api.getSettings('output_directory'),
         ])
         setProviders(availableProviders)
         setConfig(savedConfig)
+        setOutputDirectory(savedOutputDir)
         if (savedConfig.apiKey && savedConfig.apiKey !== '••••••••') {
           setApiKeyInput(savedConfig.apiKey)
         } else if (savedConfig.apiKey === '••••••••') {
@@ -135,6 +138,29 @@ export const SettingsPage: React.FC = () => {
       setModels([])
     } finally {
       setIsLoadingModels(false)
+    }
+  }
+
+  const handleBrowseDirectory = async () => {
+    try {
+      const selected = await window.api.selectDirectory()
+      if (selected) {
+        await window.api.setSettings('output_directory', selected)
+        setOutputDirectory(selected)
+        addToast({ title: 'Export Folder Set', message: `Exports will be saved to ${selected}`, type: 'success' })
+      }
+    } catch (e: any) {
+      addToast({ title: 'Error', message: e.message || 'Failed to select folder', type: 'error' })
+    }
+  }
+
+  const handleResetDirectory = async () => {
+    try {
+      await window.api.setSettings('output_directory', '')
+      setOutputDirectory(null)
+      addToast({ title: 'Export Folder Reset', message: 'You will be prompted for save location every time', type: 'info' })
+    } catch (e: any) {
+      addToast({ title: 'Error', message: e.message || 'Failed to reset folder', type: 'error' })
     }
   }
 
@@ -283,12 +309,38 @@ export const SettingsPage: React.FC = () => {
 
             {/* Action buttons */}
             <div className="flex gap-3 pt-2">
-              <Button variant="outline" onClick={handleTestConnection} isLoading={isTesting}>
+              <Button variant="outline" onClick={handleTestConnection} loading={isTesting}>
                 Test Connection
               </Button>
-              <Button onClick={handleSave} isLoading={isSaving}>
+              <Button onClick={handleSave} loading={isSaving}>
                 Save Settings
               </Button>
+            </div>
+          </Card>
+        </section>
+
+        {/* Export Folder Section */}
+        <section>
+          <div className="flex items-center gap-2 mb-4">
+            <Folder className="w-5 h-5 text-accent" />
+            <h2 className="text-xl font-semibold text-white">Export Settings</h2>
+          </div>
+          <Card className="p-6 flex flex-col gap-4">
+            <p className="text-sm text-muted">Configure where your generated CVs and cover letters are saved when exported.</p>
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-medium text-secondary">Output Directory</label>
+              <div className="flex gap-3 items-center">
+                <div className="flex-1 input-field py-2 px-3 text-sm text-white bg-surface-elevated rounded-lg border border-subtle overflow-hidden text-ellipsis whitespace-nowrap min-h-[38px] flex items-center">
+                  {outputDirectory || 'Prompt every time'}
+                </div>
+                <Button variant="outline" onClick={handleBrowseDirectory}>Browse</Button>
+                {outputDirectory && (
+                  <Button variant="ghost" onClick={handleResetDirectory} className="text-danger hover:bg-danger/10">Reset</Button>
+                )}
+              </div>
+              <p className="text-xs text-secondary mt-1">
+                If set, documents will be exported directly to this folder. If empty, you will be prompted for a save location each time.
+              </p>
             </div>
           </Card>
         </section>

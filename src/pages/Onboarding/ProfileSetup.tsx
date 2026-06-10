@@ -7,12 +7,13 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
 
-type Tab = 'personal' | 'summary' | 'writing'
+type Tab = 'personal' | 'summary' | 'writing' | 'references'
 
 const tabs: { id: Tab; label: string; icon: typeof User }[] = [
   { id: 'personal', label: 'Personal Info', icon: User },
   { id: 'summary', label: 'Summary', icon: FileText },
   { id: 'writing', label: 'Writing Sample', icon: PenTool },
+  { id: 'references', label: 'References', icon: User },
 ]
 
 export default function ProfileSetup() {
@@ -33,6 +34,7 @@ export default function ProfileSetup() {
     portfolio_url: '',
     professional_summary: '',
     writing_samples: '',
+    references: '',
   })
 
   const update = (field: keyof Profile, value: string) => {
@@ -177,6 +179,26 @@ export default function ProfileSetup() {
               />
               <p className="text-xs text-tertiary">
                 This is optional but helps generate more authentic content.
+              </p>
+            </div>
+          )}
+
+          {activeTab === 'references' && (
+            <div className="flex flex-col gap-3">
+              <p className="text-sm text-tertiary">
+                Enter professional references (e.g. name, title, company, contact info) that you'd like to include on your CV, or write "References available upon request".
+              </p>
+              <Input
+                multiline
+                placeholder="e.g.&#10;Jane Smith&#10;Director of Engineering, Acme Corp&#10;Email: jane.smith@acme.com&#10;Phone: +1 (555) 987-6543"
+                value={form.references}
+                onChange={(e) =>
+                  update('references', (e.target as HTMLTextAreaElement).value)
+                }
+                style={{ minHeight: 160 }}
+              />
+              <p className="text-xs text-tertiary">
+                This is optional but helps format professional references if the job description or layout requires them.
               </p>
             </div>
           )}

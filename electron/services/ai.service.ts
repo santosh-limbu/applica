@@ -202,15 +202,19 @@ Return a JSON object with EXACTLY this schema (no additional keys):
 {
   "role_title": "string — the job title",
   "company": "string — the company name, or empty string if unknown",
-  "seniority_level": "string — one of: entry, junior, mid, senior, lead, principal, executive",
+  "experience_level": "string — one of: entry, junior, mid, senior, lead, principal, executive",
+  "seniority_level": "string — same as experience_level",
   "required_skills": ["array of required technical & soft skills"],
   "preferred_skills": ["array of nice-to-have skills"],
   "required_experience_years": 0,
   "key_responsibilities": ["array of main responsibilities"],
+  "qualifications": ["array of required academic/professional qualifications, degrees, or certifications"],
   "industry": "string — the industry sector",
   "keywords": ["important ATS keywords from the posting"],
   "tone": "string — the tone of the posting: formal, casual, technical, etc.",
-  "summary": "string — a 2-3 sentence summary of the role"
+  "summary": "string — a 2-3 sentence summary of the role",
+  "salary_range": "string — the salary range if stated, or empty string if unknown",
+  "location": "string — the job location if stated, or empty string if unknown"
 }
 
 JOB DESCRIPTION:
@@ -258,6 +262,7 @@ CRITICAL RULES:
 5. Where the candidate provides quantified achievements, keep them. Do NOT add fake metrics.
 6. Prioritise experiences and skills most relevant to the target role.
 7. The professional summary should be 3-4 sentences maximum.
+8. If the candidate data includes a 'references' field in their profile, format and append a "References" section at the very end of the 'content_html' (under a header like "References" or "Professional References"). If references are empty or not provided, write "References available upon request" or omit this section depending on spacing.
 ${writingToneInstruction}
 CANDIDATE DATA:
 ${candidateInfo}

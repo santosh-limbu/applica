@@ -50,7 +50,7 @@ export default function App() {
   }
 
   // Onboarding pages render full-screen (no AppShell)
-  const onboardingPages: Record<string, JSX.Element> = {
+  const onboardingPages: Record<string, React.JSX.Element> = {
     'onboarding-welcome': <Welcome />,
     'onboarding-apikey': <ApiKeySetup />,
     'onboarding-profile': <ProfileSetup />,
@@ -61,7 +61,7 @@ export default function App() {
   }
 
   // Regular pages render inside AppShell
-  const pages: Record<string, JSX.Element> = {
+  const pages: Record<string, React.JSX.Element> = {
     dashboard: <DashboardPage />,
     'new-application': <JobInput />,
     'job-analysis': <JobAnalysis />,

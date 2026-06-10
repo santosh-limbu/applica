@@ -154,6 +154,13 @@ function createTables(): void {
       value TEXT NOT NULL
     );
   `);
+
+  // Ensure 'references' column exists in profiles table
+  try {
+    db.exec('ALTER TABLE profiles ADD COLUMN references TEXT');
+  } catch (err) {
+    // Column already exists, ignore
+  }
 }
 
 export function getDb(): Database.Database {
@@ -203,7 +210,7 @@ export function saveProfile(profile: Profile): Profile {
       `UPDATE profiles SET
         full_name = ?, email = ?, phone = ?, location = ?,
         linkedin_url = ?, portfolio_url = ?, professional_summary = ?,
-        writing_samples = ?, updated_at = CURRENT_TIMESTAMP
+        writing_samples = ?, references = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?`
     ).run(
       profile.full_name,
@@ -214,13 +221,14 @@ export function saveProfile(profile: Profile): Profile {
       profile.portfolio_url ?? null,
       profile.professional_summary ?? null,
       profile.writing_samples ?? null,
+      profile.references ?? null,
       profile.id
     );
     return getProfileById(profile.id)!;
   } else {
     const result = db.prepare(
-      `INSERT INTO profiles (full_name, email, phone, location, linkedin_url, portfolio_url, professional_summary, writing_samples)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO profiles (full_name, email, phone, location, linkedin_url, portfolio_url, professional_summary, writing_samples, references)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       profile.full_name,
       profile.email ?? null,
@@ -229,7 +237,8 @@ export function saveProfile(profile: Profile): Profile {
       profile.linkedin_url ?? null,
       profile.portfolio_url ?? null,
       profile.professional_summary ?? null,
-      profile.writing_samples ?? null
+      profile.writing_samples ?? null,
+      profile.references ?? null
     );
     return getProfileById(Number(result.lastInsertRowid))!;
   }

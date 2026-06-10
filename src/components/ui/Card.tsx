@@ -7,6 +7,7 @@ interface CardProps {
   variant?: 'glass' | 'surface' | 'elevated'
   className?: string
   onClick?: () => void
+  style?: React.CSSProperties
 }
 
 const paddingClass: Record<string, string> = {
@@ -29,11 +30,13 @@ export default function Card({
   variant = 'glass',
   className = '',
   onClick,
+  style,
 }: CardProps) {
   return (
     <div
       className={`card ${paddingClass[padding]} ${variantClass[variant]} ${hover ? 'card-hover pointer' : ''} ${className}`}
       onClick={onClick}
+      style={style}
     >
       {children}
     </div>

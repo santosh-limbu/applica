@@ -15,6 +15,7 @@ import {
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
 import { useProfileStore } from '@/stores/profile.store'
+import { useEditorStore } from '@/stores/editor.store'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 
@@ -55,8 +56,11 @@ export default function JobAnalysis() {
     setGeneratingCV(true)
     try {
       const cv = await window.api.generateCV(currentApplication.id!, 'modern')
+      if (cv.content_html) {
+        useEditorStore.getState().setContent(cv.content_html)
+      }
       addToast({ type: 'success', title: 'CV Generated', message: cv.title })
-      // In a full implementation we'd navigate to the editor
+      navigate('editor')
     } catch {
       addToast({ type: 'error', title: 'Generation failed' })
     } finally {
@@ -75,6 +79,7 @@ export default function JobAnalysis() {
         title: 'Cover letter generated',
         message: 'Copied to clipboard!',
       })
+      navigate('cover-letter')
     } catch {
       addToast({ type: 'error', title: 'Generation failed' })
     } finally {
