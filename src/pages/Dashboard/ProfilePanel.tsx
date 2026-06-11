@@ -273,22 +273,22 @@ export default function ProfilePanel() {
           {/* Quick contact details row */}
           <div className="flex justify-center gap-4 mt-3 text-tertiary text-xs">
             {profile?.email && (
-              <a href={`mailto:${profile.email}`} className="hover:text-primary transition-colors" title={profile.email}>
+              <a href={`mailto:${profile.email}`} className="text-accent hover:text-primary transition-colors" title={profile.email}>
                 <Mail size={16} />
               </a>
             )}
             {profile?.phone && (
-              <span className="hover:text-primary cursor-default" title={profile.phone}>
+              <span className="text-accent hover:text-primary cursor-default" title={profile.phone}>
                 <Phone size={16} />
               </span>
             )}
             {profile?.linkedin_url && (
-              <a href={profile.linkedin_url} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" title="LinkedIn">
+              <a href={profile.linkedin_url} target="_blank" rel="noreferrer" className="text-accent hover:text-primary transition-colors" title="LinkedIn">
                 <Linkedin size={16} />
               </a>
             )}
             {profile?.portfolio_url && (
-              <a href={profile.portfolio_url} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors" title="Portfolio">
+              <a href={profile.portfolio_url} target="_blank" rel="noreferrer" className="text-accent hover:text-primary transition-colors" title="Portfolio">
                 <Globe size={16} />
               </a>
             )}
