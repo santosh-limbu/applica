@@ -40,7 +40,10 @@ export default function Button({
       {...props}
     >
       {loading ? (
-        <span className="btn-spinner" />
+        <span className="flex items-center justify-center gap-2">
+          <span className="btn-spinner" style={{ margin: 0, display: 'inline-block' }} />
+          <span>{children}</span>
+        </span>
       ) : (
         <>
           {iconLeft && <span className="flex items-center">{iconLeft}</span>}

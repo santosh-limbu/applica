@@ -188,28 +188,21 @@ export default function JobInput() {
               </div>
             )}
 
-            {/* Action CTA Button */}
+             {/* Action CTA Button */}
             <div className="mt-4">
               <Button
                 size="lg"
                 loading={analyzing}
                 disabled={!description.trim() || !company.trim() || !roleTitle.trim()}
-                iconLeft={<Sparkles size={18} />}
-                iconRight={<ArrowRight size={18} />}
+                iconLeft={!analyzing ? <Sparkles size={18} /> : undefined}
+                iconRight={!analyzing ? <ArrowRight size={18} /> : undefined}
                 onClick={handleAnalyze}
                 style={{ width: '100%', padding: '12px' }}
               >
-                Analyze Job Description
+                {analyzing ? 'AI is performing deep analysis...' : 'Analyze Job Description'}
               </Button>
             </div>
           </Card>
-
-          {analyzing && (
-            <div className="flex items-center justify-center gap-3 bg-accent/10 border border-accent/20 p-4 rounded-xl">
-              <div className="btn-spinner" />
-              <span className="text-xs font-semibold text-accent animate-pulse">AI is performing deep analysis...</span>
-            </div>
-          )}
         </div>
 
         {/* Right Column: Description Editor */}
