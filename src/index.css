@@ -1078,6 +1078,20 @@ p {
 /* Misc */
 .relative { position: relative; }
 .absolute { position: absolute; }
+.top-2    { top: 8px; }
+.left-2   { left: 8px; }
+.right-2  { right: 8px; }
+.opacity-0 { opacity: 0; }
+.opacity-50 { opacity: 0.5; }
+.opacity-80 { opacity: 0.8; }
+.transition-opacity {
+  transition-property: opacity;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  transition-duration: 150ms;
+}
+.group:hover .group-hover\:opacity-100 {
+  opacity: 1;
+}
 .overflow-hidden { overflow: hidden; }
 .overflow-auto   { overflow: auto; }
 .pointer { cursor: pointer; }
