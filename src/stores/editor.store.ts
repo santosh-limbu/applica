@@ -14,7 +14,7 @@ interface EditorState {
 export const useEditorStore = create<EditorState>((set) => ({
   content: '',
   templateId: 'modern',
-  viewMode: 'split',
+  viewMode: 'editor',
   setContent: (content) => set({ content }),
   setTemplateId: (templateId) => set({ templateId }),
   setViewMode: (viewMode) => set({ viewMode }),

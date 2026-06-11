@@ -6,7 +6,7 @@ import Button from '@/components/ui/Button'
 import { useEditorStore } from '@/stores/editor.store'
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
-import { Save, Download, ArrowLeft, Briefcase, X, RefreshCw } from 'lucide-react'
+import { Save, Download, ArrowLeft, Briefcase, X, RefreshCw, Eye, EyeOff } from 'lucide-react'
 
 export const EditorPage: React.FC = () => {
   const [isExportModalOpen, setIsExportModalOpen] = useState(false)
@@ -123,49 +123,24 @@ export const EditorPage: React.FC = () => {
             </select>
           </div>
 
-          {/* View Toggles */}
-          <div className="flex gap-0.5 p-1 rounded-lg border border-default" style={{ background: 'var(--bg-elevated)', border: '1px solid var(--border-default)' }}>
-            <button
-              onClick={() => setViewMode('editor')}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all`}
-              style={{
-                background: viewMode === 'editor' ? 'var(--accent-primary)' : 'transparent',
-                color: viewMode === 'editor' ? '#ffffff' : 'var(--text-secondary)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Write Focus
-            </button>
-            <button
-              onClick={() => setViewMode('split')}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all`}
-              style={{
-                background: viewMode === 'split' ? 'var(--accent-primary)' : 'transparent',
-                color: viewMode === 'split' ? '#ffffff' : 'var(--text-secondary)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Split View
-            </button>
-            <button
-              onClick={() => setViewMode('preview')}
-              className={`px-3 py-1 text-xs font-semibold rounded-md transition-all`}
-              style={{
-                background: viewMode === 'preview' ? 'var(--accent-primary)' : 'transparent',
-                color: viewMode === 'preview' ? '#ffffff' : 'var(--text-secondary)',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              Preview Focus
-            </button>
-          </div>
+          {/* Toggle Live Preview */}
+          <Button 
+            variant="outline" 
+            onClick={() => setViewMode(viewMode === 'editor' ? 'split' : 'editor')}
+            disabled={isSaving || isRegenerating}
+          >
+            {viewMode === 'editor' ? (
+              <>
+                <Eye className="w-4 h-4 mr-2 inline" /> Show Live Preview
+              </>
+            ) : (
+              <>
+                <EyeOff className="w-4 h-4 mr-2 inline" /> Hide Live Preview
+              </>
+            )}
+          </Button>
 
-          <div style={{ width: '1px', height: '24px', background: 'var(--border-default)', margin: '0 4px' }} />
-
-          {viewMode !== 'preview' && viewMode !== 'editor' && (
+          {viewMode !== 'preview' && (
             <Button variant="outline" onClick={() => setShowReference(!showReference)}>
               <Briefcase className="w-4 h-4 mr-2 inline" /> {showReference ? 'Hide Job Info' : 'Show Job Info'}
             </Button>
@@ -184,7 +159,7 @@ export const EditorPage: React.FC = () => {
 
       <div className="flex-1 flex gap-6 min-h-0 overflow-hidden">
         {/* Left Column: Reference Panel (Collapsible) */}
-        {viewMode !== 'preview' && viewMode !== 'editor' && showReference && (
+        {viewMode !== 'preview' && showReference && (
           <div className="flex flex-col w-80 min-h-0 bg-surface border border-default rounded-xl overflow-hidden" style={{ flexShrink: 0 }}>
             <div className="flex justify-between items-center p-4 border-b border-default bg-surface-elevated">
               <h3 className="font-semibold text-white flex items-center gap-2" style={{ margin: 0 }}>
@@ -278,8 +253,14 @@ export const EditorPage: React.FC = () => {
                   )}
                 </div>
               ) : (
-                <div className="text-xs text-secondary whitespace-pre-wrap leading-relaxed" style={{ fontSize: '11px' }}>
-                  {currentApplication?.job_description || 'No job description provided.'}
+                <div className="flex flex-col gap-2 min-w-0">
+                  <h4 className="text-xs font-semibold text-tertiary uppercase tracking-wider mb-1" style={{ fontSize: '10px' }}>Full Description</h4>
+                  <div 
+                    className="text-xs text-secondary whitespace-pre-wrap break-words leading-relaxed bg-black/30 p-3 rounded-lg border border-default min-w-0 overflow-y-auto max-h-[350px]"
+                    style={{ fontSize: '11px', wordBreak: 'break-word' }}
+                  >
+                    {currentApplication?.job_description || 'No job description provided.'}
+                  </div>
                 </div>
               )}
             </div>
