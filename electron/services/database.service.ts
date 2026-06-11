@@ -157,7 +157,7 @@ function createTables(): void {
 
   // Ensure 'references' column exists in profiles table
   try {
-    db.exec('ALTER TABLE profiles ADD COLUMN references TEXT');
+    db.exec('ALTER TABLE profiles ADD COLUMN "references" TEXT');
   } catch (err) {
     // Column already exists, ignore
   }
@@ -210,7 +210,7 @@ export function saveProfile(profile: Profile): Profile {
       `UPDATE profiles SET
         full_name = ?, email = ?, phone = ?, location = ?,
         linkedin_url = ?, portfolio_url = ?, professional_summary = ?,
-        writing_samples = ?, references = ?, updated_at = CURRENT_TIMESTAMP
+        writing_samples = ?, "references" = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?`
     ).run(
       profile.full_name,
@@ -227,7 +227,7 @@ export function saveProfile(profile: Profile): Profile {
     return getProfileById(profile.id)!;
   } else {
     const result = db.prepare(
-      `INSERT INTO profiles (full_name, email, phone, location, linkedin_url, portfolio_url, professional_summary, writing_samples, references)
+      `INSERT INTO profiles (full_name, email, phone, location, linkedin_url, portfolio_url, professional_summary, writing_samples, "references")
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       profile.full_name,

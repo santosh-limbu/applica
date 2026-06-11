@@ -44,7 +44,7 @@ function createWindow(): void {
     titleBarOverlay: {
       color: '#0f172a',     // Slate-900
       symbolColor: '#e2e8f0', // Slate-200
-      height: 36
+      height: 32
     },
     backgroundColor: '#0f172a',
     webPreferences: {

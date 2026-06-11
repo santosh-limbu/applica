@@ -62,6 +62,14 @@ export default function ProfilePanel() {
     open: false,
   })
 
+  // Delete confirmation state
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    type: 'experience' | 'education' | 'skill' | 'certification'
+    id: number
+    title: string
+    onConfirm: () => void
+  } | null>(null)
+
   // Skill input state
   const [newSkillName, setNewSkillName] = useState('')
   const [newSkillCategory, setNewSkillCategory] = useState('Technical')
@@ -325,9 +333,9 @@ export default function ProfilePanel() {
               <div>
                 <h4 className="font-semibold text-secondary uppercase tracking-wider text-xs mb-2">Professional Summary</h4>
                 {profile?.professional_summary ? (
-                  <p className="text-secondary leading-relaxed text-xs text-justify bg-surface p-3 rounded-lg border border-default">
-                    {profile.professional_summary}
-                  </p>
+                  <div className="text-secondary leading-relaxed text-xs bg-surface p-3 rounded-lg border border-default">
+                    <ExpandableText text={profile.professional_summary} maxLines={4} />
+                  </div>
                 ) : (
                   <p className="text-tertiary text-xs italic">No professional summary added yet. Click edit above to add one.</p>
                 )}
@@ -337,9 +345,9 @@ export default function ProfilePanel() {
               <div>
                 <h4 className="font-semibold text-secondary uppercase tracking-wider text-xs mb-2">References</h4>
                 {profile?.references ? (
-                  <p className="text-secondary leading-relaxed text-xs whitespace-pre-wrap bg-surface p-3 rounded-lg border border-default">
-                    {profile.references}
-                  </p>
+                  <div className="text-secondary leading-relaxed text-xs bg-surface p-3 rounded-lg border border-default">
+                    <ExpandableText text={profile.references} maxLines={3} />
+                  </div>
                 ) : (
                   <p className="text-tertiary text-xs italic">No reference info added yet. Click edit above to add references.</p>
                 )}
@@ -354,7 +362,15 @@ export default function ProfilePanel() {
                       <span key={skill.id} className="tag tag-accent text-xs pr-1 flex items-center gap-1">
                         {skill.name}
                         <button
-                          onClick={() => skill.id && handleDeleteSkill(skill.id)}
+                          onClick={() =>
+                            skill.id &&
+                            setDeleteConfirm({
+                              type: 'skill',
+                              id: skill.id,
+                              title: skill.name,
+                              onConfirm: () => handleDeleteSkill(skill.id!),
+                            })
+                          }
                           className="hover:bg-subtle rounded-full p-0.5 text-accent hover:text-danger transition-colors"
                         >
                           <X size={10} />
@@ -408,7 +424,11 @@ export default function ProfilePanel() {
                         <div className="font-semibold text-primary text-xs break-words leading-snug">{exp.role}</div>
                         <div className="text-tertiary text-xs mt-0.5 break-words">{exp.company} {exp.location && `· ${exp.location}`}</div>
                         <div className="text-[10px] text-tertiary font-medium mt-1">{exp.start_date} - {exp.end_date || 'Present'}</div>
-                        {exp.description && <p className="text-tertiary text-xs leading-normal mt-1 break-words">{exp.description}</p>}
+                        {exp.description && (
+                          <div className="text-tertiary text-xs leading-normal mt-1">
+                            <ExpandableText text={exp.description} maxLines={2} />
+                          </div>
+                        )}
                       </div>
                       
                       <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface/80 pl-1 rounded">
@@ -420,7 +440,15 @@ export default function ProfilePanel() {
                           <Edit2 size={12} />
                         </button>
                         <button
-                          onClick={() => exp.id && handleDeleteExp(exp.id)}
+                          onClick={() =>
+                            exp.id &&
+                            setDeleteConfirm({
+                              type: 'experience',
+                              id: exp.id,
+                              title: `${exp.role} at ${exp.company}`,
+                              onConfirm: () => handleDeleteExp(exp.id!),
+                            })
+                          }
                           className="p-1 text-tertiary hover:text-danger rounded hover:bg-subtle transition-colors"
                           title="Delete"
                         >
@@ -461,7 +489,11 @@ export default function ProfilePanel() {
                         <div className="text-tertiary text-xs mt-0.5 break-words">{edu.institution}</div>
                         <div className="text-[10px] text-tertiary font-medium mt-1">{edu.start_date} - {edu.end_date || 'Ongoing'}</div>
                         {edu.grade && <div className="text-[10px] text-accent font-medium mt-0.5">Grade: {edu.grade}</div>}
-                        {edu.description && <p className="text-tertiary text-xs leading-normal mt-1 break-words">{edu.description}</p>}
+                        {edu.description && (
+                          <div className="text-tertiary text-xs leading-normal mt-1">
+                            <ExpandableText text={edu.description} maxLines={2} />
+                          </div>
+                        )}
                       </div>
                       
                       <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface/80 pl-1 rounded">
@@ -472,8 +504,16 @@ export default function ProfilePanel() {
                         >
                           <Edit2 size={12} />
                         </button>
-                        <button
-                          onClick={() => edu.id && handleDeleteEdu(edu.id)}
+                         <button
+                          onClick={() =>
+                            edu.id &&
+                            setDeleteConfirm({
+                              type: 'education',
+                              id: edu.id,
+                              title: `${edu.degree} at ${edu.institution}`,
+                              onConfirm: () => handleDeleteEdu(edu.id!),
+                            })
+                          }
                           className="p-1 text-tertiary hover:text-danger rounded hover:bg-subtle transition-colors"
                           title="Delete"
                         >
@@ -521,7 +561,15 @@ export default function ProfilePanel() {
                           <Edit2 size={12} />
                         </button>
                         <button
-                          onClick={() => cert.id && handleDeleteCert(cert.id)}
+                          onClick={() =>
+                            cert.id &&
+                            setDeleteConfirm({
+                              type: 'certification',
+                              id: cert.id,
+                              title: cert.name,
+                              onConfirm: () => handleDeleteCert(cert.id!),
+                            })
+                          }
                           className="p-1 text-tertiary hover:text-danger rounded hover:bg-subtle transition-colors"
                           title="Delete"
                         >
@@ -632,7 +680,61 @@ export default function ProfilePanel() {
         onClose={() => setCertModal({ open: false })}
         onSave={handleCertSave}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Modal
+        open={!!deleteConfirm}
+        onClose={() => setDeleteConfirm(null)}
+        title={`Delete ${deleteConfirm ? deleteConfirm.type.charAt(0).toUpperCase() + deleteConfirm.type.slice(1) : ''}`}
+        footer={
+          <>
+            <Button variant="secondary" onClick={() => setDeleteConfirm(null)}>Cancel</Button>
+            <Button variant="danger" onClick={() => {
+              if (deleteConfirm) {
+                deleteConfirm.onConfirm()
+                setDeleteConfirm(null)
+              }
+            }}>Delete</Button>
+          </>
+        }
+      >
+        <p className="text-sm text-secondary">
+          Are you sure you want to delete <strong className="text-primary">{deleteConfirm?.title}</strong>? This action cannot be undone.
+        </p>
+      </Modal>
     </>
+  )
+}
+
+function ExpandableText({ text, maxLines = 3 }: { text: string; maxLines?: number }) {
+  const [isExpanded, setIsExpanded] = useState(false)
+  const isLong = text.length > 120
+
+  const clampStyle: React.CSSProperties = {
+    display: '-webkit-box',
+    WebkitLineClamp: maxLines,
+    WebkitBoxOrient: 'vertical',
+    overflow: 'hidden',
+    wordBreak: 'break-word',
+  }
+
+  return (
+    <div 
+      onClick={() => isLong && setIsExpanded(!isExpanded)}
+      className={isLong ? 'cursor-pointer hover:bg-subtle transition-colors rounded p-1 -m-1' : ''}
+      title={isLong ? (isExpanded ? 'Click to collapse' : 'Click to expand') : undefined}
+    >
+      <div 
+        style={isLong && !isExpanded ? clampStyle : { wordBreak: 'break-word', whiteSpace: 'pre-wrap' }}
+      >
+        {text}
+      </div>
+      {isLong && (
+        <span className="text-[10px] text-accent font-semibold mt-1 block select-none">
+          {isExpanded ? 'Show less ▲' : 'Show more ▼'}
+        </span>
+      )}
+    </div>
   )
 }
 

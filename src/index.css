@@ -1092,6 +1092,11 @@ p {
 .group:hover .group-hover\:opacity-100 {
   opacity: 1;
 }
+.hover\:text-accent:hover    { color: var(--accent-primary); }
+.hover\:text-primary:hover   { color: var(--text-primary); }
+.hover\:text-secondary:hover { color: var(--text-secondary); }
+.hover\:text-danger:hover    { color: var(--danger); }
+.hover\:bg-subtle:hover      { background: var(--bg-hover); }
 .overflow-hidden { overflow: hidden; }
 .overflow-auto   { overflow: auto; }
 .pointer { cursor: pointer; }
