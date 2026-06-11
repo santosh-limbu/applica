@@ -555,61 +555,61 @@ export default function ProfilePanel() {
           </>
         }
       >
-        <div className="flex flex-col gap-4">
+        <div className="grid grid-cols-2 gap-4">
           <Input
             label="Full Name"
             value={personalForm.full_name}
             onChange={(e) => setPersonalForm({ ...personalForm, full_name: e.target.value })}
           />
-          <div className="grid grid-cols-2 gap-4">
-            <Input
-              label="Email"
-              type="email"
-              value={personalForm.email}
-              onChange={(e) => setPersonalForm({ ...personalForm, email: e.target.value })}
-            />
-            <Input
-              label="Phone"
-              value={personalForm.phone}
-              onChange={(e) => setPersonalForm({ ...personalForm, phone: e.target.value })}
-            />
-          </div>
           <Input
             label="Location"
             value={personalForm.location}
             onChange={(e) => setPersonalForm({ ...personalForm, location: e.target.value })}
             placeholder="City, Country"
           />
-          <div className="grid grid-cols-2 gap-4">
+          <Input
+            label="Email"
+            type="email"
+            value={personalForm.email}
+            onChange={(e) => setPersonalForm({ ...personalForm, email: e.target.value })}
+          />
+          <Input
+            label="Phone"
+            value={personalForm.phone}
+            onChange={(e) => setPersonalForm({ ...personalForm, phone: e.target.value })}
+          />
+          <Input
+            label="LinkedIn URL"
+            value={personalForm.linkedin_url}
+            onChange={(e) => setPersonalForm({ ...personalForm, linkedin_url: e.target.value })}
+            placeholder="https://linkedin.com/in/..."
+          />
+          <Input
+            label="Portfolio URL"
+            value={personalForm.portfolio_url}
+            onChange={(e) => setPersonalForm({ ...personalForm, portfolio_url: e.target.value })}
+            placeholder="https://..."
+          />
+          <div className="col-span-2">
             <Input
-              label="LinkedIn URL"
-              value={personalForm.linkedin_url}
-              onChange={(e) => setPersonalForm({ ...personalForm, linkedin_url: e.target.value })}
-              placeholder="https://linkedin.com/in/..."
-            />
-            <Input
-              label="Portfolio URL"
-              value={personalForm.portfolio_url}
-              onChange={(e) => setPersonalForm({ ...personalForm, portfolio_url: e.target.value })}
-              placeholder="https://..."
+              label="Professional Summary"
+              multiline
+              rows={3}
+              value={personalForm.professional_summary}
+              onChange={(e) => setPersonalForm({ ...personalForm, professional_summary: e.target.value })}
+              placeholder="Summarize your professional background..."
             />
           </div>
-          <Input
-            label="Professional Summary"
-            multiline
-            rows={4}
-            value={personalForm.professional_summary}
-            onChange={(e) => setPersonalForm({ ...personalForm, professional_summary: e.target.value })}
-            placeholder="Summarize your professional background..."
-          />
-          <Input
-            label="References"
-            multiline
-            rows={4}
-            value={personalForm.references}
-            onChange={(e) => setPersonalForm({ ...personalForm, references: e.target.value })}
-            placeholder="Jane Smith, Director of Engineering at Acme Corp (jane.smith@acme.com) or 'References available upon request'..."
-          />
+          <div className="col-span-2">
+            <Input
+              label="References"
+              multiline
+              rows={3}
+              value={personalForm.references}
+              onChange={(e) => setPersonalForm({ ...personalForm, references: e.target.value })}
+              placeholder="Jane Smith, Director of Engineering at Acme Corp (jane.smith@acme.com) or 'References available upon request'..."
+            />
+          </div>
         </div>
       </Modal>
 
