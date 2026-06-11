@@ -87,121 +87,162 @@ export default function JobInput() {
   }
 
   return (
-    <>
-      <div className="page-header flex items-center gap-3">
-        <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} />} onClick={() => navigate('dashboard')}>
+    <div className="flex flex-col h-full gap-6 overflow-hidden p-1">
+      {/* Page Header */}
+      <div className="flex items-center gap-4">
+        <Button 
+          variant="ghost" 
+          size="sm" 
+          iconLeft={<ArrowLeft size={16} />} 
+          onClick={() => navigate('dashboard')}
+          style={{ padding: '8px' }}
+        >
           Back
         </Button>
         <div>
-          <h1 className="page-title" style={{ margin: 0 }}>New Application</h1>
-          <p className="page-subtitle" style={{ margin: 0 }}>Enter a job description to get started</p>
+          <h1 className="text-3xl font-bold text-white tracking-tight" style={{ margin: 0 }}>New Application</h1>
+          <p className="text-muted mt-1" style={{ margin: 0 }}>Provide the job details to start tailoring your profile and documents</p>
         </div>
       </div>
 
-      {/* Tab switcher */}
-      <div className="tabs mb-6">
-        <button
-          className={`tab flex items-center gap-2 ${activeTab === 'paste' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('paste')}
-        >
-          <ClipboardPaste size={14} />
-          Paste Description
-        </button>
-        <button
-          className={`tab flex items-center gap-2 ${activeTab === 'url' ? 'tab-active' : ''}`}
-          onClick={() => setActiveTab('url')}
-        >
-          <Link2 size={14} />
-          Enter URL
-        </button>
-      </div>
-
-      {/* Content */}
-      <Card variant="surface" padding="lg" className="mb-6">
-        {activeTab === 'paste' ? (
-          <Input
-            multiline
-            placeholder="Paste the full job description here…&#10;&#10;Include the role title, requirements, responsibilities, qualifications, and any other relevant details."
-            value={description}
-            onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
-            style={{ minHeight: 240 }}
-          />
-        ) : (
-          <div className="flex flex-col gap-4">
-            <div className="flex gap-3">
-              <div className="flex-1">
-                <Input
-                  placeholder="https://careers.example.com/job/software-engineer"
-                  value={url}
-                  onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
-                  iconLeft={<Globe size={16} />}
-                />
-              </div>
-              <Button
-                variant="secondary"
-                onClick={handleFetchUrl}
-                loading={fetching}
-                disabled={!url.trim()}
-              >
-                Fetch
-              </Button>
+      {/* 2-Column Responsive Layout */}
+      <div className="grid gap-6 flex-1 min-h-0 overflow-hidden" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
+        {/* Left Column: Input Panel */}
+        <div className="flex flex-col gap-4 min-h-0">
+          <Card variant="surface" className="p-6 flex flex-col gap-5">
+            <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider mb-1" style={{ margin: 0 }}>Application Details</h3>
+            
+            <div className="flex flex-col gap-4">
+              <Input
+                label="Company Name"
+                placeholder="e.g. Acme Corp"
+                value={company}
+                onChange={(e) => setCompany((e.target as HTMLInputElement).value)}
+                iconLeft={<Building2 size={16} className="text-accent" />}
+              />
+              <Input
+                label="Role Title"
+                placeholder="e.g. Senior Software Engineer"
+                value={roleTitle}
+                onChange={(e) => setRoleTitle((e.target as HTMLInputElement).value)}
+                iconLeft={<Briefcase size={16} className="text-accent" />}
+              />
             </div>
 
-            {description && (
-              <div>
-                <label className="input-label mb-2" style={{ display: 'block' }}>
-                  Fetched Description
-                </label>
+            <div className="divider my-2" />
+
+            <div className="flex flex-col gap-3">
+              <label className="text-xs font-semibold text-tertiary uppercase tracking-wider">Description Source</label>
+              {/* Tab switcher inside left card */}
+              <div className="flex gap-1 bg-surface-elevated p-1 rounded-lg" style={{ border: '1px solid var(--border-default)' }}>
+                <button
+                  type="button"
+                  className={`flex-1 py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-2 transition-all`}
+                  style={{
+                    background: activeTab === 'paste' ? 'var(--accent-primary)' : 'transparent',
+                    color: activeTab === 'paste' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setActiveTab('paste')}
+                >
+                  <ClipboardPaste size={14} />
+                  Paste Details
+                </button>
+                <button
+                  type="button"
+                  className={`flex-1 py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-2 transition-all`}
+                  style={{
+                    background: activeTab === 'url' ? 'var(--accent-primary)' : 'transparent',
+                    color: activeTab === 'url' ? 'var(--text-primary)' : 'var(--text-tertiary)',
+                    border: 'none',
+                    cursor: 'pointer'
+                  }}
+                  onClick={() => setActiveTab('url')}
+                >
+                  <Link2 size={14} />
+                  Import URL
+                </button>
+              </div>
+            </div>
+
+            {/* URL Input sub-flow */}
+            {activeTab === 'url' && (
+              <div className="flex flex-col gap-2 mt-1">
                 <Input
-                  multiline
-                  value={description}
-                  onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
-                  style={{ minHeight: 180 }}
+                  label="Job Post URL"
+                  placeholder="https://careers.example.com/job/..."
+                  value={url}
+                  onChange={(e) => setUrl((e.target as HTMLInputElement).value)}
+                  iconLeft={<Globe size={16} className="text-accent" />}
                 />
+                <Button
+                  variant="secondary"
+                  onClick={handleFetchUrl}
+                  loading={fetching}
+                  disabled={!url.trim()}
+                  style={{ width: '100%' }}
+                >
+                  Fetch Job Details
+                </Button>
               </div>
             )}
-          </div>
-        )}
-      </Card>
 
-      {/* Company & Role */}
-      <div className="grid gap-4 mb-8" style={{ gridTemplateColumns: '1fr 1fr' }}>
-        <Input
-          label="Company Name"
-          placeholder="Acme Corp"
-          value={company}
-          onChange={(e) => setCompany((e.target as HTMLInputElement).value)}
-          iconLeft={<Building2 size={16} />}
-        />
-        <Input
-          label="Role Title"
-          placeholder="Senior Software Engineer"
-          value={roleTitle}
-          onChange={(e) => setRoleTitle((e.target as HTMLInputElement).value)}
-          iconLeft={<Briefcase size={16} />}
-        />
-      </div>
+            {/* Action CTA Button */}
+            <div className="mt-4">
+              <Button
+                size="lg"
+                loading={analyzing}
+                disabled={!description.trim() || !company.trim() || !roleTitle.trim()}
+                iconLeft={<Sparkles size={18} />}
+                iconRight={<ArrowRight size={18} />}
+                onClick={handleAnalyze}
+                style={{ width: '100%', padding: '12px' }}
+              >
+                Analyze Job Description
+              </Button>
+            </div>
+          </Card>
 
-      {/* CTA */}
-      <div className="flex justify-center">
-        <Button
-          size="lg"
-          loading={analyzing}
-          disabled={!description.trim() || !company.trim() || !roleTitle.trim()}
-          iconLeft={<Sparkles size={18} />}
-          iconRight={<ArrowRight size={18} />}
-          onClick={handleAnalyze}
-        >
-          Analyze Job
-        </Button>
-      </div>
-
-      {analyzing && (
-        <div className="flex items-center justify-center gap-3 mt-6">
-          <div className="btn-spinner" />
-          <span className="text-sm text-secondary">AI is analyzing the job description…</span>
+          {analyzing && (
+            <div className="flex items-center justify-center gap-3 bg-accent/10 border border-accent/20 p-4 rounded-xl">
+              <div className="btn-spinner" />
+              <span className="text-xs font-semibold text-accent animate-pulse">AI is performing deep analysis...</span>
+            </div>
+          )}
         </div>
-      )}
-    </>
+
+        {/* Right Column: Description Editor */}
+        <div className="flex flex-col min-h-0">
+          <Card variant="surface" padding="none" className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: '100%' }}>
+            <div className="p-4 border-b border-default bg-surface-elevated flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-default)', background: 'var(--bg-elevated)' }}>
+              <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider m-0" style={{ margin: 0 }}>Job Description</h3>
+              {description.trim() && (
+                <span className="badge badge-draft text-[10px] uppercase font-bold py-0.5 px-2">
+                  {description.trim().split(/\s+/).length} words
+                </span>
+              )}
+            </div>
+            <div className="flex-1 p-4 flex flex-col min-h-0">
+              <textarea
+                className="flex-1 input-field p-4 text-sm resize-none overflow-y-auto bg-black/10 rounded-xl"
+                style={{
+                  minHeight: '280px',
+                  fontFamily: 'inherit',
+                  lineHeight: '1.6',
+                  border: '1px solid var(--border-default)',
+                  outline: 'none',
+                  color: 'var(--text-primary)',
+                  background: 'var(--bg-surface)'
+                }}
+                placeholder="Paste the full job description here...&#10;&#10;Include responsibilities, required skills, daily tasks, and qualifications. This text will be analyzed to tailor your CV templates and generate targeted cover letters."
+                value={description}
+                onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)}
+              />
+            </div>
+          </Card>
+        </div>
+      </div>
+    </div>
   )
 }
