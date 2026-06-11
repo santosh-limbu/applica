@@ -68,6 +68,25 @@ describe('GeminiProvider', () => {
 
       expect(result).toBe('Test response');
     });
+
+    it('should call getGenerativeModel with systemInstruction when systemPrompt is provided', async () => {
+      mockGenerateContent.mockResolvedValueOnce({
+        response: {
+          text: () => 'Test response with system instruction'
+        }
+      });
+
+      mockGetGenerativeModel.mockClear();
+
+      const result = await provider.generateText('Test prompt', 'System instruction');
+
+      expect(result).toBe('Test response with system instruction');
+      expect(mockGetGenerativeModel).toHaveBeenCalledWith({
+        model: 'gemini-2.0-flash',
+        systemInstruction: 'System instruction'
+      });
+      expect(mockGenerateContent).toHaveBeenCalledWith('Test prompt');
+    });
   });
 
   describe('listModels', () => {

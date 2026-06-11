@@ -43,6 +43,17 @@ describe('GeminiProvider', () => {
       const result = await provider.generateText('test prompt');
       expect(result).toBe('Success text');
     });
+
+    it('should handle system prompt parameter successfully', async () => {
+      mockGenerateContent.mockResolvedValueOnce({
+        response: {
+          text: () => 'Success text with system prompt',
+        },
+      });
+
+      const result = await provider.generateText('test prompt', 'system prompt');
+      expect(result).toBe('Success text with system prompt');
+    });
   });
 
   describe('testConnection', () => {

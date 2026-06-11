@@ -116,13 +116,17 @@ export class OpenAICompatProvider implements AIProvider {
     return serverAlive;
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, systemPrompt?: string): Promise<string> {
+    const messages: Array<{ role: string; content: string }> = systemPrompt 
+      ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }]
+      : [{ role: 'user', content: prompt }];
+
     const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
       method: 'POST',
       headers: this._headers(),
       body: JSON.stringify({
         model: this.model,
-        messages: [{ role: 'user', content: prompt }],
+        messages,
         temperature: 0.4,
       }),
       signal: AbortSignal.timeout(120000), // 2min timeout — local models can be slow

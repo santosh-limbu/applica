@@ -86,6 +86,7 @@ export default function ProfilePanel() {
     portfolio_url: '',
     professional_summary: '',
     references: '',
+    writing_samples: '',
   })
 
   // Sync personal info state
@@ -100,6 +101,7 @@ export default function ProfilePanel() {
         portfolio_url: profile.portfolio_url || '',
         professional_summary: profile.professional_summary || '',
         references: profile.references || '',
+        writing_samples: profile.writing_samples || '',
       })
     }
   }, [profile])
@@ -352,6 +354,18 @@ export default function ProfilePanel() {
                   </div>
                 ) : (
                   <p className="text-tertiary text-xs italic">No reference info added yet. Click edit above to add references.</p>
+                )}
+              </div>
+
+              {/* Writing Samples */}
+              <div>
+                <h4 className="font-semibold text-secondary uppercase tracking-wider text-xs mb-2">Writing Samples (Tone Matching)</h4>
+                {profile?.writing_samples ? (
+                  <div className="text-secondary leading-relaxed text-xs bg-surface p-3 rounded-lg border border-default">
+                    <ExpandableText text={profile.writing_samples} maxLines={3} />
+                  </div>
+                ) : (
+                  <p className="text-tertiary text-xs italic">No writing samples added yet. Click edit above to add samples for AI style matching.</p>
                 )}
               </div>
 
@@ -654,6 +668,16 @@ export default function ProfilePanel() {
               value={personalForm.references}
               onChange={(e) => setPersonalForm({ ...personalForm, references: e.target.value })}
               placeholder="Jane Smith, Director of Engineering at Acme Corp (jane.smith@acme.com) or 'References available upon request'..."
+            />
+          </div>
+          <div className="col-span-2">
+            <Input
+              label="Writing Samples (used to match your style)"
+              multiline
+              rows={3}
+              value={personalForm.writing_samples}
+              onChange={(e) => setPersonalForm({ ...personalForm, writing_samples: e.target.value })}
+              placeholder="Paste custom writing samples (emails, articles, project proposals) to train AI to write in your natural tone..."
             />
           </div>
         </div>

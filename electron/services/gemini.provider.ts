@@ -14,11 +14,13 @@ const GEMINI_MODELS = [
 export class GeminiProvider implements AIProvider {
   readonly name = 'Google Gemini';
   private model: GenerativeModel;
+  private modelName: string;
 
   constructor(
     private apiKey: string,
     modelName: string = 'gemini-2.0-flash'
   ) {
+    this.modelName = modelName;
     const genAI = new GoogleGenerativeAI(apiKey);
     this.model = genAI.getGenerativeModel({ model: modelName });
   }
@@ -33,7 +35,16 @@ export class GeminiProvider implements AIProvider {
     }
   }
 
-  async generateText(prompt: string): Promise<string> {
+  async generateText(prompt: string, systemPrompt?: string): Promise<string> {
+    if (systemPrompt) {
+      const genAI = new GoogleGenerativeAI(this.apiKey);
+      const modelWithSystem = genAI.getGenerativeModel({
+        model: this.modelName,
+        systemInstruction: systemPrompt,
+      });
+      const result = await modelWithSystem.generateContent(prompt);
+      return result.response.text();
+    }
     const result = await this.model.generateContent(prompt);
     return result.response.text();
   }
