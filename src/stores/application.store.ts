@@ -7,6 +7,7 @@ interface ApplicationState {
   jobAnalysis: JobAnalysis | null
   atsScore: ATSScore | null
   isLoading: boolean
+  generatingApplications: Record<number, 'cv' | 'cover-letter' | null>
 
   loadApplications: () => Promise<void>
   loadApplication: (id: number) => Promise<void>
@@ -20,6 +21,7 @@ interface ApplicationState {
   setCurrentApplication: (app: Application | null) => void
   setJobAnalysis: (analysis: JobAnalysis | null) => void
   setAtsScore: (score: ATSScore | null) => void
+  setGenerating: (id: number, task: 'cv' | 'cover-letter' | null) => void
 }
 
 export const useApplicationStore = create<ApplicationState>((set, get) => ({
@@ -44,6 +46,16 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     try {
       const app = await window.api.getApplication(id)
       set({ currentApplication: app })
+      if (app && app.ats_score_details) {
+        try {
+          const parsed = JSON.parse(app.ats_score_details)
+          set({ atsScore: parsed })
+        } catch {
+          set({ atsScore: null })
+        }
+      } else {
+        set({ atsScore: null })
+      }
     } finally {
       set({ isLoading: false })
     }
@@ -94,13 +106,29 @@ export const useApplicationStore = create<ApplicationState>((set, get) => ({
     try {
       const score = await window.api.scoreATS(cvContent, jobDescription)
       set({ atsScore: score })
+      const current = get().currentApplication
+      if (current && current.id) {
+        const updated = await window.api.saveApplication({
+          ...current,
+          ats_score: score.overall_score,
+          ats_score_details: JSON.stringify(score),
+        })
+        set({ currentApplication: updated })
+      }
       return score
     } finally {
       set({ isLoading: false })
     }
   },
 
+  generatingApplications: {},
   setCurrentApplication: (app) => set({ currentApplication: app }),
   setJobAnalysis: (analysis) => set({ jobAnalysis: analysis }),
   setAtsScore: (score) => set({ atsScore: score }),
+  setGenerating: (id, task) => set(state => ({
+    generatingApplications: {
+      ...state.generatingApplications,
+      [id]: task
+    }
+  })),
 }))

@@ -20,6 +20,8 @@ vi.mock('../../services/database.service', () => ({
   getApplicationById: vi.fn(),
   getProfileById: vi.fn(),
   getExperiences: vi.fn(),
+  getEducation: vi.fn(),
+  getCertifications: vi.fn(),
   saveApplication: vi.fn(),
   saveCoverLetter: vi.fn(),
 }));
@@ -55,6 +57,8 @@ describe('AI IPC Handlers - generateCoverLetter', () => {
     });
     (db.getProfileById as any).mockReturnValue({ id: 1, name: 'John Doe' });
     (db.getExperiences as any).mockReturnValue([]);
+    (db.getEducation as any).mockReturnValue([]);
+    (db.getCertifications as any).mockReturnValue([]);
 
     // 3. Mock ai.generateCoverLetter to throw an error
     const testError = new Error('AI Service Down');

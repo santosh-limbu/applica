@@ -9,6 +9,7 @@ import {
   Target,
   Trophy,
   TrendingUp,
+  RefreshCw,
 } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
@@ -50,6 +51,7 @@ export default function DashboardPage() {
     updateApplicationStatus,
     setCurrentApplication,
     isLoading,
+    generatingApplications,
   } = useApplicationStore()
 
   const [search, setSearch] = useState('')
@@ -223,6 +225,14 @@ export default function DashboardPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Generating status aligned to the right */}
+                    {app.id && generatingApplications[app.id] && (
+                      <div className="flex items-center gap-2 text-xs text-accent-primary animate-pulse bg-accent-muted/40 px-3 py-1.5 rounded-lg border border-accent/20 font-medium whitespace-nowrap">
+                        <RefreshCw className="w-3.5 h-3.5 animate-spin text-accent" />
+                        {generatingApplications[app.id] === 'cv' ? 'Generating CV...' : 'Generating Cover Letter...'}
+                      </div>
+                    )}
 
                     {/* ATS score */}
                     {app.ats_score !== undefined && app.ats_score !== null && (

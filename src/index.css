@@ -1104,6 +1104,16 @@ p {
 .overflow-auto   { overflow: auto; }
 .pointer { cursor: pointer; }
 .select-none { user-select: none; }
+.uppercase { text-transform: uppercase; }
+.tracking-wider { letter-spacing: 0.05em; }
+.tracking-tight { letter-spacing: -0.025em; }
+.border { border: 1px solid var(--border-default); }
+.border-b { border-bottom: 1px solid var(--border-default); }
+.border-default { border-color: var(--border-default); }
+.rounded-xl { border-radius: var(--radius-lg); }
+.bg-surface { background: var(--bg-surface); }
+.bg-surface-elevated { background: var(--bg-elevated); }
+
 .sr-only {
   position: absolute;
   width: 1px;

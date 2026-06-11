@@ -64,7 +64,7 @@ export class OpenAICompatProvider implements AIProvider {
     }
 
     // Try Ollama specific /api/tags if the standard models list failed
-    if (!serverAlive) {
+    if (this.name === 'Ollama' && !serverAlive) {
       try {
         const response = await fetch(`${this.baseUrl}/api/tags`, {
           signal: AbortSignal.timeout(5000),
@@ -168,19 +168,21 @@ export class OpenAICompatProvider implements AIProvider {
     }
 
     // Try Ollama /api/tags
-    try {
-      const response = await fetch(`${this.baseUrl}/api/tags`, {
-        signal: AbortSignal.timeout(5000),
-      });
+    if (this.name === 'Ollama') {
+      try {
+        const response = await fetch(`${this.baseUrl}/api/tags`, {
+          signal: AbortSignal.timeout(5000),
+        });
 
-      if (response.ok) {
-        const data = (await response.json()) as ModelsResponse;
-        if (data.models && Array.isArray(data.models)) {
-          return data.models.map((m) => m.name || m.model);
+        if (response.ok) {
+          const data = (await response.json()) as ModelsResponse;
+          if (data.models && Array.isArray(data.models)) {
+            return data.models.map((m) => m.name || m.model);
+          }
         }
+      } catch {
+        // No models found
       }
-    } catch {
-      // No models found
     }
 
     return models;

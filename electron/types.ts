@@ -81,6 +81,7 @@ export interface Application {
   recruiter_email?: string;
   notes?: string;
   ats_score?: number;
+  ats_score_details?: string;
   ai_analysis?: string;
   created_at?: string;
   updated_at?: string;

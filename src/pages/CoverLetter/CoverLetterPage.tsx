@@ -8,13 +8,17 @@ import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
 
 export const CoverLetterPage: React.FC = () => {
-  const { currentApplication, applications, setCurrentApplication } = useApplicationStore()
+  const { currentApplication, applications, setCurrentApplication, setGenerating, generatingApplications } = useApplicationStore()
   const { addToast, navigate } = useAppStore()
   
   const [isGenerating, setIsGenerating] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
   const [content, setContent] = useState<string>('')
-  
+
+  const isGeneratingCL = currentApplication?.id
+    ? generatingApplications[currentApplication.id] === 'cover-letter'
+    : false
+
   const editor = useEditor({
     extensions: [StarterKit],
     content: content,
@@ -66,9 +70,11 @@ export const CoverLetterPage: React.FC = () => {
       return
     }
     
+    const appId = currentApplication.id
+    setGenerating(appId, 'cover-letter')
     setIsGenerating(true)
     try {
-      const generatedText = await window.api.generateCoverLetter(currentApplication.id)
+      const generatedText = await window.api.generateCoverLetter(appId)
       
       const htmlContent = generatedText
         .split('\n\n')
@@ -79,7 +85,7 @@ export const CoverLetterPage: React.FC = () => {
 
       // Auto-save generated cover letter
       await window.api.saveCoverLetter({
-        application_id: currentApplication.id,
+        application_id: appId,
         profile_id: currentApplication.profile_id,
         content: htmlContent
       })
@@ -89,6 +95,7 @@ export const CoverLetterPage: React.FC = () => {
       addToast({ title: 'Generation Failed', message: e.message || 'Failed to generate cover letter', type: 'error' })
     } finally {
       setIsGenerating(false)
+      setGenerating(appId, null)
     }
   }
 
@@ -206,7 +213,7 @@ export const CoverLetterPage: React.FC = () => {
           </div>
         </div>
         <div className="flex gap-4">
-          <Button variant="outline" onClick={handleGenerate} loading={isGenerating}>
+          <Button variant="outline" onClick={handleGenerate} loading={isGenerating || isGeneratingCL}>
             <Wand2 className="w-4 h-4 mr-2 inline" /> 
             {content ? 'Regenerate' : 'Generate with AI'}
           </Button>
@@ -228,7 +235,7 @@ export const CoverLetterPage: React.FC = () => {
 
       <div className="flex-1 overflow-y-auto pr-2 pb-10 flex justify-center">
         <div className="w-full max-w-3xl">
-          {!content && !isGenerating ? (
+          {!content && !(isGenerating || isGeneratingCL) ? (
             <Card className="p-12 flex flex-col items-center justify-center text-center gap-4 h-full">
               <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center text-accent mb-2">
                 <FileDown className="w-8 h-8" />
@@ -241,7 +248,7 @@ export const CoverLetterPage: React.FC = () => {
                 <Wand2 className="w-4 h-4 mr-2" /> Generate Now
               </Button>
             </Card>
-          ) : isGenerating ? (
+          ) : (isGenerating || isGeneratingCL) ? (
             <Card className="p-12 flex flex-col items-center justify-center text-center gap-4 h-full animate-pulse">
               <RefreshCw className="w-8 h-8 text-accent animate-spin" />
               <p className="text-white font-medium">Crafting the perfect cover letter...</p>

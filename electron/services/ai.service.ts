@@ -276,7 +276,9 @@ export async function generateCoverLetter(
   _apiKeyOrIgnored: string,
   profile: Profile,
   experiences: Experience[],
-  jobAnalysis: JobAnalysis
+  jobAnalysis: JobAnalysis,
+  education?: Education[],
+  certifications?: Certification[]
 ): Promise<string> {
   const provider = getActiveProvider();
   const systemPrompt = getCoverLetterSystemPrompt(profile);
@@ -285,6 +287,8 @@ export async function generateCoverLetter(
 Name: ${profile.full_name}
 Summary: ${profile.professional_summary ?? ''}
 Experience: ${JSON.stringify(experiences.map((e) => ({ company: e.company, role: e.role, achievements: e.achievements })))}
+${education && education.length > 0 ? `Education: ${JSON.stringify(education.map((edu) => ({ institution: edu.institution, degree: edu.degree, field_of_study: edu.field_of_study })))}` : ''}
+${certifications && certifications.length > 0 ? `Certifications: ${JSON.stringify(certifications.map((c) => ({ name: c.name, issuer: c.issuer })))}` : ''}
 
 TARGET ROLE:
 Title: ${jobAnalysis.role_title}

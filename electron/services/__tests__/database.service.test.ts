@@ -1,7 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as dbService from '../database.service';
-import Database from 'better-sqlite3';
-import path from 'path';
 
 vi.mock('electron', () => ({
   app: {
@@ -10,15 +8,40 @@ vi.mock('electron', () => ({
 }));
 
 vi.mock('better-sqlite3', () => {
-  return {
-    default: class MockDatabase {
-      constructor() {
-        return new (require('better-sqlite3'))(':memory:');
-      }
+  class MockDatabase {
+    private settings: Record<string, string> = {};
+
+    pragma() {}
+    exec() {}
+    close() {}
+
+    prepare(sql: string) {
+      const isSelect = sql.toLowerCase().includes('select');
+      const isInsert = sql.toLowerCase().includes('insert') || sql.toLowerCase().includes('replace');
+
+      return {
+        get: (key: string) => {
+          if (isSelect) {
+            const val = this.settings[key];
+            return val !== undefined ? { value: val } : undefined;
+          }
+          return undefined;
+        },
+        run: (key: string, val: string) => {
+          if (isInsert) {
+            this.settings[key] = val;
+          }
+          return { changes: 1 };
+        },
+        all: () => []
+      };
     }
+  }
+
+  return {
+    default: MockDatabase
   };
 });
-
 
 describe('Database Service - Settings', () => {
   beforeEach(() => {

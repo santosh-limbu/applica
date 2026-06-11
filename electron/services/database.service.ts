@@ -111,6 +111,7 @@ function createTables(): void {
       recruiter_email TEXT,
       notes TEXT,
       ats_score REAL,
+      ats_score_details TEXT,
       ai_analysis TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -161,6 +162,13 @@ function createTables(): void {
   } catch (err) {
     // Column already exists, ignore
   }
+
+  // Ensure 'ats_score_details' column exists in applications table
+  try {
+    db.exec('ALTER TABLE applications ADD COLUMN "ats_score_details" TEXT');
+  } catch (err) {
+    // Column already exists, ignore
+  }
 }
 
 export function getDb(): Database.Database {
@@ -176,6 +184,7 @@ export function closeDatabase(): void {
 // ── Settings ─────────────────────────────────────────────────
 
 export function getSetting(key: string): string | null {
+  if (!db) return null;
   const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key) as
     | { value: string }
     | undefined;
@@ -183,10 +192,12 @@ export function getSetting(key: string): string | null {
 }
 
 export function setSetting(key: string, value: string): void {
+  if (!db) return;
   db.prepare('INSERT OR REPLACE INTO settings (key, value) VALUES (?, ?)').run(key, value);
 }
 
 export function deleteSetting(key: string): void {
+  if (!db) return;
   db.prepare('DELETE FROM settings WHERE key = ?').run(key);
 }
 
@@ -467,7 +478,7 @@ export function saveApplication(application: Application): Application {
         profile_id = ?, company = ?, role_title = ?, job_description = ?,
         job_url = ?, status = ?, applied_date = ?, salary_range = ?,
         recruiter_name = ?, recruiter_email = ?, notes = ?,
-        ats_score = ?, ai_analysis = ?, updated_at = CURRENT_TIMESTAMP
+        ats_score = ?, ats_score_details = ?, ai_analysis = ?, updated_at = CURRENT_TIMESTAMP
       WHERE id = ?`
     ).run(
       application.profile_id,
@@ -482,14 +493,15 @@ export function saveApplication(application: Application): Application {
       application.recruiter_email ?? null,
       application.notes ?? null,
       application.ats_score ?? null,
+      application.ats_score_details ?? null,
       application.ai_analysis ?? null,
       application.id
     );
     return getApplicationById(application.id)!;
   } else {
     const result = db.prepare(
-      `INSERT INTO applications (profile_id, company, role_title, job_description, job_url, status, applied_date, salary_range, recruiter_name, recruiter_email, notes, ats_score, ai_analysis)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+      `INSERT INTO applications (profile_id, company, role_title, job_description, job_url, status, applied_date, salary_range, recruiter_name, recruiter_email, notes, ats_score, ats_score_details, ai_analysis)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
     ).run(
       application.profile_id,
       application.company,
@@ -503,6 +515,7 @@ export function saveApplication(application: Application): Application {
       application.recruiter_email ?? null,
       application.notes ?? null,
       application.ats_score ?? null,
+      application.ats_score_details ?? null,
       application.ai_analysis ?? null
     );
     return getApplicationById(Number(result.lastInsertRowid))!;

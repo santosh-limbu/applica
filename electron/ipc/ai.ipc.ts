@@ -6,6 +6,12 @@ import { ipcMain } from 'electron';
 import * as ai from '../services/ai.service';
 import * as db from '../services/database.service';
 import * as storage from '../services/storage.service';
+import {
+  DEFAULT_JOB_ANALYSIS_PROMPT,
+  DEFAULT_CV_GEN_PROMPT,
+  DEFAULT_COVER_LETTER_PROMPT,
+  DEFAULT_ATS_SCORING_PROMPT
+} from '../services/system-prompts';
 
 export function registerAiHandlers(): void {
   // ── Analyse Job Description ──────────────────────────────────
@@ -75,6 +81,20 @@ export function registerAiHandlers(): void {
         content: JSON.stringify(generated)
       });
 
+      // Auto-run ATS scoring on the generated CV content
+      if (application.job_description) {
+        try {
+          const atsResult = await ai.scoreATS(apiKey, generated.content_html, application.job_description);
+          db.saveApplication({
+            ...application,
+            ats_score: atsResult.overall_score,
+            ats_score_details: JSON.stringify(atsResult)
+          });
+        } catch (atsErr) {
+          console.error('[IPC:generateCV] ATS scoring failed:', atsErr);
+        }
+      }
+
       return generated;
     } catch (err) {
       console.error('[IPC:generateCV]', err);
@@ -95,6 +115,8 @@ export function registerAiHandlers(): void {
       if (!profile) throw new Error('Profile not found');
 
       const experiences = db.getExperiences(profile.id!);
+      const education = db.getEducation(profile.id!);
+      const certifications = db.getCertifications(profile.id!);
 
       let jobAnalysis = application.ai_analysis
         ? JSON.parse(application.ai_analysis)
@@ -112,7 +134,14 @@ export function registerAiHandlers(): void {
         throw new Error('No job description available to generate a cover letter.');
       }
 
-      const letter = await ai.generateCoverLetter(apiKey, profile, experiences, jobAnalysis);
+      const letter = await ai.generateCoverLetter(
+        apiKey,
+        profile,
+        experiences,
+        jobAnalysis,
+        education,
+        certifications
+      );
 
       // Auto-save the cover letter
       db.saveCoverLetter({
@@ -142,4 +171,13 @@ export function registerAiHandlers(): void {
       }
     }
   );
+
+  ipcMain.handle('getDefaultSystemPrompts', () => {
+    return {
+      prompt_job_analysis: DEFAULT_JOB_ANALYSIS_PROMPT,
+      prompt_cv_generation: DEFAULT_CV_GEN_PROMPT,
+      prompt_cover_letter: DEFAULT_COVER_LETTER_PROMPT,
+      prompt_ats_scoring: DEFAULT_ATS_SCORING_PROMPT
+    };
+  });
 }

@@ -13,7 +13,13 @@ import { useEditorStore } from '@/stores/editor.store'
 import { EditorToolbar } from './EditorToolbar'
 import { SectionBlock } from './SectionBlock'
 
-export const CVEditor: React.FC = () => {
+interface CVEditorProps {
+  onRegenerate?: () => void
+  isRegenerating?: boolean
+  isSaving?: boolean
+}
+
+export const CVEditor: React.FC<CVEditorProps> = ({ onRegenerate, isRegenerating, isSaving }) => {
   const { content, setContent } = useEditorStore()
 
   const editor = useEditor({
@@ -51,8 +57,13 @@ export const CVEditor: React.FC = () => {
   }, [content, editor])
 
   return (
-    <div className="flex flex-col h-full bg-surface rounded-lg border border-subtle overflow-hidden">
-      <EditorToolbar editor={editor} />
+    <div className="flex flex-col h-full bg-surface rounded-lg border border-subtle overflow-hidden relative">
+      <EditorToolbar 
+        editor={editor} 
+        onRegenerate={onRegenerate}
+        isRegenerating={isRegenerating}
+        isSaving={isSaving}
+      />
       <div className="flex-1 overflow-y-auto bg-black p-4">
         <div className="max-w-4xl mx-auto">
           <EditorContent editor={editor} />

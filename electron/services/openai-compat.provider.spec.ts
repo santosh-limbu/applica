@@ -116,4 +116,93 @@ describe('OpenAICompatProvider', () => {
       ]);
     });
   });
+
+  describe('listModels', () => {
+    it('should fetch from /v1/models and return IDs for standard provider', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          data: [
+            { id: 'model-a' },
+            { id: 'model-b' }
+          ]
+        })
+      });
+
+      const result = await provider.listModels();
+      expect(result).toEqual(['model-a', 'model-b']);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect((global.fetch as any).mock.calls[0][0]).toBe('http://localhost:1234/v1/models');
+    });
+
+    it('should not query /api/tags for standard provider if /v1/models fails', async () => {
+      (global.fetch as any).mockRejectedValueOnce(new Error('Network error'));
+
+      const result = await provider.listModels();
+      expect(result).toEqual([]);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect((global.fetch as any).mock.calls[0][0]).toBe('http://localhost:1234/v1/models');
+    });
+
+    it('should query /api/tags for Ollama provider if /v1/models fails', async () => {
+      const ollamaProvider = new OpenAICompatProvider('http://localhost:11434', 'llama3.2', undefined, 'Ollama');
+      
+      // /v1/models fails
+      (global.fetch as any).mockRejectedValueOnce(new Error('No OpenAI compat endpoint'));
+      // /api/tags succeeds
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          models: [
+            { name: 'llama3:latest' }
+          ]
+        })
+      });
+
+      const result = await ollamaProvider.listModels();
+      expect(result).toEqual(['llama3:latest']);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect((global.fetch as any).mock.calls[0][0]).toBe('http://localhost:11434/v1/models');
+      expect((global.fetch as any).mock.calls[1][0]).toBe('http://localhost:11434/api/tags');
+    });
+  });
+
+  describe('testConnection', () => {
+    it('should return true if /v1/models returns 200', async () => {
+      const defaultProvider = new OpenAICompatProvider(mockEndpoint, 'default', undefined);
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true
+      });
+
+      const result = await defaultProvider.testConnection();
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect((global.fetch as any).mock.calls[0][0]).toBe('http://localhost:1234/v1/models');
+    });
+
+    it('should not try /api/tags for standard provider if /v1/models fails', async () => {
+      const defaultProvider = new OpenAICompatProvider(mockEndpoint, 'default', undefined);
+      (global.fetch as any).mockRejectedValueOnce(new Error('Connection failed'));
+
+      const result = await defaultProvider.testConnection();
+      expect(result).toBe(false);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+      expect((global.fetch as any).mock.calls[0][0]).toBe('http://localhost:1234/v1/models');
+    });
+
+    it('should fall back to /api/tags for Ollama provider if /v1/models fails', async () => {
+      const ollamaProvider = new OpenAICompatProvider('http://localhost:11434', 'default', undefined, 'Ollama');
+      
+      (global.fetch as any).mockRejectedValueOnce(new Error('No OpenAI endpoint'));
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true
+      });
+
+      const result = await ollamaProvider.testConnection();
+      expect(result).toBe(true);
+      expect(global.fetch).toHaveBeenCalledTimes(2);
+      expect((global.fetch as any).mock.calls[0][0]).toBe('http://localhost:11434/v1/models');
+      expect((global.fetch as any).mock.calls[1][0]).toBe('http://localhost:11434/api/tags');
+    });
+  });
 });

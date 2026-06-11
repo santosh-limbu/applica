@@ -4,6 +4,7 @@ import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import { useAppStore } from '@/stores/app.store'
 import type { ProviderConfig, ProviderInfo } from '@/types/ipc.types'
+import Modal from '@/components/ui/Modal'
 import {
   Settings, Key, Palette, HardDrive, AlertTriangle,
   Monitor, Plug, Sparkles, CheckCircle, XCircle, Loader2, RefreshCw, Folder
@@ -17,6 +18,24 @@ const PROVIDER_ICONS: Record<string, React.ReactNode> = {
 
 export const SettingsPage: React.FC = () => {
   const { addToast } = useAppStore()
+
+  // Prompt editor state
+  const [isPromptEditorOpen, setIsPromptEditorOpen] = useState(false)
+  const [promptTab, setPromptTab] = useState<'prompt_job_analysis' | 'prompt_cv_generation' | 'prompt_cover_letter' | 'prompt_ats_scoring'>('prompt_job_analysis')
+  const [customPrompts, setCustomPrompts] = useState<Record<string, string>>({
+    prompt_job_analysis: '',
+    prompt_cv_generation: '',
+    prompt_cover_letter: '',
+    prompt_ats_scoring: '',
+  })
+  const [defaultPrompts, setDefaultPrompts] = useState<Record<string, string>>({
+    prompt_job_analysis: '',
+    prompt_cv_generation: '',
+    prompt_cover_letter: '',
+    prompt_ats_scoring: '',
+  })
+  const [isLoadingPrompts, setIsLoadingPrompts] = useState(false)
+  const [isSavingPrompts, setIsSavingPrompts] = useState(false)
 
   // Provider state
   const [providers, setProviders] = useState<ProviderInfo[]>([])
@@ -52,6 +71,51 @@ export const SettingsPage: React.FC = () => {
     }
     load()
   }, [])
+
+  const handleOpenPromptEditor = async () => {
+    setIsLoadingPrompts(true)
+    setIsPromptEditorOpen(true)
+    try {
+      const [defaults, jobAnalysis, cvGen, coverLetter, atsScoring] = await Promise.all([
+        window.api.getDefaultSystemPrompts(),
+        window.api.getSettings('prompt_job_analysis'),
+        window.api.getSettings('prompt_cv_generation'),
+        window.api.getSettings('prompt_cover_letter'),
+        window.api.getSettings('prompt_ats_scoring'),
+      ])
+      setDefaultPrompts(defaults)
+      setCustomPrompts({
+        prompt_job_analysis: jobAnalysis || '',
+        prompt_cv_generation: cvGen || '',
+        prompt_cover_letter: coverLetter || '',
+        prompt_ats_scoring: atsScoring || '',
+      })
+    } catch (e) {
+      console.error('Failed to load prompts', e)
+      addToast({ title: 'Error', message: 'Failed to load system prompts', type: 'error' })
+    } finally {
+      setIsLoadingPrompts(false)
+    }
+  }
+
+  const handleSavePrompts = async () => {
+    setIsSavingPrompts(true)
+    try {
+      await Promise.all([
+        window.api.setSettings('prompt_job_analysis', customPrompts.prompt_job_analysis),
+        window.api.setSettings('prompt_cv_generation', customPrompts.prompt_cv_generation),
+        window.api.setSettings('prompt_cover_letter', customPrompts.prompt_cover_letter),
+        window.api.setSettings('prompt_ats_scoring', customPrompts.prompt_ats_scoring),
+      ])
+      addToast({ title: 'Saved', message: 'System prompts saved successfully', type: 'success' })
+      setIsPromptEditorOpen(false)
+    } catch (e: any) {
+      console.error('Failed to save prompts', e)
+      addToast({ title: 'Error', message: e.message || 'Failed to save system prompts', type: 'error' })
+    } finally {
+      setIsSavingPrompts(false)
+    }
+  }
 
   // Fetch models when provider or endpoint changes
   useEffect(() => {
@@ -168,10 +232,7 @@ export const SettingsPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden p-6 gap-6">
-      <div>
-        <h1 className="text-3xl font-bold text-white tracking-tight">Settings</h1>
-        <p className="text-muted mt-1">Manage application preferences and integrations</p>
-      </div>
+
 
       <div className="flex-1 overflow-y-auto pr-2 pb-10 max-w-3xl flex flex-col gap-8">
         
@@ -314,6 +375,9 @@ export const SettingsPage: React.FC = () => {
               <Button variant="outline" onClick={handleTestConnection} loading={isTesting}>
                 Test Connection
               </Button>
+              <Button variant="outline" onClick={handleOpenPromptEditor}>
+                Customize Prompts
+              </Button>
               <Button onClick={handleSave} loading={isSaving}>
                 Save Settings
               </Button>
@@ -393,6 +457,84 @@ export const SettingsPage: React.FC = () => {
         </section>
 
       </div>
+
+      {/* System Prompt Editor Modal */}
+      <Modal
+        open={isPromptEditorOpen}
+        onClose={() => setIsPromptEditorOpen(false)}
+        title="System Prompts Editor"
+        maxWidth="750px"
+        footer={
+          <div className="flex justify-between items-center w-full">
+            <Button
+              variant="ghost"
+              onClick={() => setCustomPrompts({ ...customPrompts, [promptTab]: '' })}
+              className="text-danger hover:bg-danger/10 cursor-pointer"
+            >
+              Reset Current to Default
+            </Button>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setIsPromptEditorOpen(false)}>
+                Cancel
+              </Button>
+              <Button onClick={handleSavePrompts} loading={isSavingPrompts}>
+                Save Prompts
+              </Button>
+            </div>
+          </div>
+        }
+      >
+        <div className="flex flex-col gap-4">
+          <p className="text-sm text-muted">
+            Configure custom system prompts used by the AI engine. If left empty, the application will automatically fall back to its optimized default prompt template.
+          </p>
+
+          {/* Prompt Tab Selector */}
+          <div className="flex gap-1 bg-surface-elevated p-1 rounded-lg border border-default">
+            {[
+              { id: 'prompt_job_analysis', label: 'Job Analysis' },
+              { id: 'prompt_cv_generation', label: 'CV Tailoring' },
+              { id: 'prompt_cover_letter', label: 'Cover Letter' },
+              { id: 'prompt_ats_scoring', label: 'ATS Scoring' }
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setPromptTab(tab.id as any)}
+                className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer"
+                style={{
+                  background: promptTab === tab.id ? 'var(--bg-hover)' : 'transparent',
+                  color: promptTab === tab.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
+                  border: 'none',
+                  outline: 'none'
+                }}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Prompt Area */}
+          {isLoadingPrompts ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-3 text-muted text-sm">
+              <Loader2 className="w-6 h-6 animate-spin text-accent" />
+              Loading system prompts...
+            </div>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <label className="text-xs font-semibold text-secondary uppercase tracking-wider">
+                Active Prompt Template {customPrompts[promptTab] ? '(Customized)' : '(Default)'}
+              </label>
+              <textarea
+                className="input-field font-mono p-3 leading-relaxed w-full border border-default"
+                style={{ height: '300px', resize: 'vertical', fontSize: '12px' }}
+                value={customPrompts[promptTab] || defaultPrompts[promptTab] || ''}
+                onChange={(e) => setCustomPrompts({ ...customPrompts, [promptTab]: e.target.value })}
+                placeholder="Write system prompt here..."
+              />
+            </div>
+          )}
+        </div>
+      </Modal>
     </div>
   )
 }

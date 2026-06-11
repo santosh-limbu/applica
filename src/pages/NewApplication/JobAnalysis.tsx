@@ -24,7 +24,7 @@ export default function JobAnalysis() {
   const addToast = useAppStore((s) => s.addToast)
   const profile = useProfileStore((s) => s.profile)
   const skills = useProfileStore((s) => s.skills)
-  const { jobAnalysis, currentApplication, atsScore, scoreATS } = useApplicationStore()
+  const { jobAnalysis, currentApplication, atsScore, loadApplication, setGenerating } = useApplicationStore()
   const [generatingCV, setGeneratingCV] = useState(false)
   const [generatingCL, setGeneratingCL] = useState(false)
 
@@ -48,30 +48,37 @@ export default function JobAnalysis() {
     (s) => !userSkillNames.includes(s.toLowerCase())
   )
 
-  // Compute an approximate ATS score from analysis data
-  const totalRequired = jobAnalysis.required_skills.length || 1
-  const matchPercent = Math.round((requiredMatched.length / totalRequired) * 100)
-
+  // Action buttons
   const handleGenerateCV = async () => {
+    if (!currentApplication?.id) return
+    const appId = currentApplication.id
+    setGenerating(appId, 'cv')
     setGeneratingCV(true)
     try {
-      const cv = await window.api.generateCV(currentApplication.id!, 'modern')
+      const cv = await window.api.generateCV(appId, 'modern')
       if (cv.content_html) {
         useEditorStore.getState().setContent(cv.content_html)
       }
+      // Reload the application from the database to get the updated ATS score and details
+      await loadApplication(appId)
       addToast({ type: 'success', title: 'CV Generated', message: cv.title })
       navigate('editor')
-    } catch {
+    } catch (err) {
+      console.error('CV generation failed', err)
       addToast({ type: 'error', title: 'Generation failed' })
     } finally {
       setGeneratingCV(false)
+      setGenerating(appId, null)
     }
   }
 
   const handleGenerateCoverLetter = async () => {
+    if (!currentApplication?.id) return
+    const appId = currentApplication.id
+    setGenerating(appId, 'cover-letter')
     setGeneratingCL(true)
     try {
-      const letter = await window.api.generateCoverLetter(currentApplication.id!)
+      const letter = await window.api.generateCoverLetter(appId)
       // Copy to clipboard
       await navigator.clipboard.writeText(letter)
       addToast({
@@ -84,6 +91,7 @@ export default function JobAnalysis() {
       addToast({ type: 'error', title: 'Generation failed' })
     } finally {
       setGeneratingCL(false)
+      setGenerating(appId, null)
     }
   }
 
@@ -96,21 +104,6 @@ export default function JobAnalysis() {
         <div>
           <h1 className="page-title">{currentApplication.role_title}</h1>
           <p className="page-subtitle">{currentApplication.company}</p>
-        </div>
-      </div>
-
-      {/* ATS Score — circular */}
-      <div className="flex gap-6 mb-8">
-        <Card variant="surface" padding="lg" className="flex items-center justify-center" style={{ minWidth: 200 }}>
-          <CircularScore score={matchPercent} />
-        </Card>
-
-        {/* Score breakdown */}
-        <div className="flex-1 grid gap-3" style={{ gridTemplateColumns: '1fr 1fr' }}>
-          <ScoreCard icon={Zap} label="Keywords" score={matchPercent} />
-          <ScoreCard icon={Award} label="Experience" score={jobAnalysis.experience_level === 'senior' ? 70 : 85} />
-          <ScoreCard icon={Target} label="Skills" score={Math.round((requiredMatched.length / totalRequired) * 100)} />
-          <ScoreCard icon={BookOpen} label="Education" score={80} />
         </div>
       </div>
 
@@ -168,24 +161,6 @@ export default function JobAnalysis() {
         </Card>
       </div>
 
-      {/* Suggestions */}
-      {atsScore && atsScore.suggestions.length > 0 && (
-        <Card variant="surface" padding="md" className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Lightbulb size={18} style={{ color: 'var(--warning)' }} />
-            <h3 className="text-lg font-semibold">Suggestions</h3>
-          </div>
-          <ul className="flex flex-col gap-2">
-            {atsScore.suggestions.map((s, i) => (
-              <li key={i} className="flex items-start gap-2 text-sm text-secondary">
-                <span className="text-warning mt-1">→</span>
-                {s}
-              </li>
-            ))}
-          </ul>
-        </Card>
-      )}
-
       {/* Action buttons */}
       <div className="flex gap-4 justify-center">
         <Button
@@ -207,69 +182,5 @@ export default function JobAnalysis() {
         </Button>
       </div>
     </>
-  )
-}
-
-function CircularScore({ score }: { score: number }) {
-  const radius = 60
-  const circumference = 2 * Math.PI * radius
-  const offset = circumference - (score / 100) * circumference
-
-  let color = 'var(--danger)'
-  if (score >= 70) color = 'var(--success)'
-  else if (score >= 40) color = 'var(--warning)'
-
-  return (
-    <div className="circular-progress" style={{ width: 160, height: 160 }}>
-      <svg width={160} height={160}>
-        <circle
-          cx={80}
-          cy={80}
-          r={radius}
-          fill="none"
-          stroke="var(--bg-surface)"
-          strokeWidth={10}
-        />
-        <circle
-          cx={80}
-          cy={80}
-          r={radius}
-          fill="none"
-          stroke={color}
-          strokeWidth={10}
-          strokeLinecap="round"
-          strokeDasharray={circumference}
-          strokeDashoffset={offset}
-          style={{ transition: 'stroke-dashoffset 1s cubic-bezier(0.4, 0, 0.2, 1)' }}
-        />
-      </svg>
-      <span className="circular-progress-value">{score}%</span>
-      <span className="circular-progress-label" style={{ marginTop: 44 }}>
-        ATS Match
-      </span>
-    </div>
-  )
-}
-
-function ScoreCard({
-  icon: Icon,
-  label,
-  score,
-}: {
-  icon: typeof Zap
-  label: string
-  score: number
-}) {
-  return (
-    <Card variant="elevated" padding="sm">
-      <div className="flex items-center gap-3 mb-2">
-        <Icon size={16} style={{ color: 'var(--accent-primary)' }} />
-        <span className="text-sm font-medium">{label}</span>
-        <span className="ml-auto text-sm font-bold">{score}%</span>
-      </div>
-      <div className="progress-bar">
-        <div className="progress-fill" style={{ width: `${score}%` }} />
-      </div>
-    </Card>
   )
 }

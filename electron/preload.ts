@@ -67,6 +67,7 @@ contextBridge.exposeInMainWorld('api', {
     ipcRenderer.invoke('generateCoverLetter', applicationId),
   scoreATS: (cvContent: string, jobDescription: string) =>
     ipcRenderer.invoke('scoreATS', cvContent, jobDescription),
+  getDefaultSystemPrompts: () => ipcRenderer.invoke('getDefaultSystemPrompts'),
 
   // ── Scraper ──────────────────────────────────────────────────
   scrapeJobUrl: (url: string) => ipcRenderer.invoke('scrapeJobUrl', url),

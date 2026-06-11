@@ -71,6 +71,7 @@ export interface Application {
   recruiter_email?: string
   notes?: string
   ats_score?: number
+  ats_score_details?: string
   ai_analysis?: string
   created_at?: string
   updated_at?: string
@@ -118,13 +119,12 @@ export interface JobAnalysis {
 
 export interface ATSScore {
   overall_score: number
-  keyword_match: number
-  experience_match: number
-  skills_match: number
-  education_match: number
-  suggestions: string[]
+  keyword_match_score: number
+  format_score: number
+  content_score: number
+  matched_keywords: string[]
   missing_keywords: string[]
-  strong_matches: string[]
+  suggestions: string[]
 }
 
 export interface ScrapedJob {
@@ -207,6 +207,7 @@ export interface ElectronAPI {
   generateCV: (applicationId: number, templateId: string) => Promise<GeneratedCV>
   generateCoverLetter: (applicationId: number) => Promise<string>
   scoreATS: (cvContent: string, jobDescription: string) => Promise<ATSScore>
+  getDefaultSystemPrompts: () => Promise<Record<string, string>>
   scrapeJobUrl: (url: string) => Promise<ScrapedJob>
   exportPDF: (html: string, fileName: string, outputDir?: string) => Promise<string | null>
   exportDOCX: (cvData: any, templateId: string, fileName: string, outputDir?: string) => Promise<string | null>
