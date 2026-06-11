@@ -1,18 +1,19 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GeminiProvider } from '../gemini.provider';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 
-// Create a mock inside the scope that we can import
+// Create mock functions outside to be accessible
 const mockGenerateContent = vi.fn();
+const mockGetGenerativeModel = vi.fn().mockReturnValue({
+  generateContent: mockGenerateContent
+});
 
+// Mock the GoogleGenerativeAI module
 vi.mock('@google/generative-ai', () => {
   return {
     GoogleGenerativeAI: class {
-      constructor(apiKey: string) {}
-      getGenerativeModel() {
-        return {
-          generateContent: mockGenerateContent
-        };
-      }
+      constructor() {}
+      getGenerativeModel = mockGetGenerativeModel;
     }
   };
 });
@@ -25,55 +26,78 @@ describe('GeminiProvider', () => {
     provider = new GeminiProvider('fake-api-key');
   });
 
-  describe('generateText', () => {
-    it('should throw an error when the model fails to generate content', async () => {
-      const testError = new Error('API Rate Limit Exceeded');
-      mockGenerateContent.mockRejectedValueOnce(testError);
-
-      await expect(provider.generateText('test prompt')).rejects.toThrow('API Rate Limit Exceeded');
-    });
-
-    it('should return text when content generation is successful', async () => {
-      mockGenerateContent.mockResolvedValueOnce({
-        response: {
-          text: () => 'Success text',
-        },
-      });
-
-      const result = await provider.generateText('test prompt');
-      expect(result).toBe('Success text');
-    });
-
-    it('should handle system prompt parameter successfully', async () => {
-      mockGenerateContent.mockResolvedValueOnce({
-        response: {
-          text: () => 'Success text with system prompt',
-        },
-      });
-
-      const result = await provider.generateText('test prompt', 'system prompt');
-      expect(result).toBe('Success text with system prompt');
-    });
-  });
-
   describe('testConnection', () => {
-      it('should return false when connection fails', async () => {
-        mockGenerateContent.mockRejectedValueOnce(new Error('Connection failed'));
+    it('should return false when generateContent throws an error', async () => {
+      mockGenerateContent.mockRejectedValueOnce(new Error('API Error'));
 
-        const result = await provider.testConnection();
-        expect(result).toBe(false);
+      const result = await provider.testConnection();
+
+      expect(result).toBe(false);
+      expect(mockGenerateContent).toHaveBeenCalledWith('Respond with the single word: OK');
+    });
+
+    it('should return true when API responds with OK', async () => {
+      mockGenerateContent.mockResolvedValueOnce({
+        response: {
+          text: () => 'ok'
+        }
       });
 
-      it('should return true when connection succeeds and returns OK', async () => {
-        mockGenerateContent.mockResolvedValueOnce({
-          response: {
-            text: () => 'OK',
-          },
-        });
+      const result = await provider.testConnection();
 
-        const result = await provider.testConnection();
-        expect(result).toBe(true);
-      });
+      expect(result).toBe(true);
+    });
   });
 
+  describe('generateText', () => {
+    it('should propagate errors from the API', async () => {
+      const error = new Error('API Error');
+      mockGenerateContent.mockRejectedValueOnce(error);
+
+      await expect(provider.generateText('Test prompt')).rejects.toThrow('API Error');
+    });
+
+    it('should return the text response from the API', async () => {
+      mockGenerateContent.mockResolvedValueOnce({
+        response: {
+          text: () => 'Test response'
+        }
+      });
+
+      const result = await provider.generateText('Test prompt');
+
+      expect(result).toBe('Test response');
+    });
+
+    it('should call getGenerativeModel with systemInstruction when systemPrompt is provided', async () => {
+      mockGenerateContent.mockResolvedValueOnce({
+        response: {
+          text: () => 'Test response with system instruction'
+        }
+      });
+
+      mockGetGenerativeModel.mockClear();
+
+      const result = await provider.generateText('Test prompt', 'System instruction');
+
+      expect(result).toBe('Test response with system instruction');
+      expect(mockGetGenerativeModel).toHaveBeenCalledWith({
+        model: 'gemini-2.0-flash',
+        systemInstruction: 'System instruction'
+      });
+      expect(mockGenerateContent).toHaveBeenCalledWith('Test prompt');
+    });
+  });
+
+  describe('listModels', () => {
+    it('should return the curated list of models', async () => {
+      const result = await provider.listModels();
+
+      expect(result).toEqual([
+        'gemini-2.0-flash',
+        'gemini-2.5-flash',
+        'gemini-2.5-pro',
+      ]);
+    });
+  });
 });

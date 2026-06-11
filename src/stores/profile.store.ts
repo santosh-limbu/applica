@@ -30,115 +30,74 @@ interface ProfileState {
   deleteCertification: (id: number) => Promise<void>
 }
 
-export const useProfileStore = create<ProfileState>((set, get) => ({
-  profile: null,
-  experiences: [],
-  education: [],
-  skills: [],
-  certifications: [],
-  isLoading: false,
-
-  loadProfile: async () => {
-    set({ isLoading: true })
-    try {
-      const profile = await window.api.getProfile()
-      set({ profile })
-      if (profile?.id) {
-        await Promise.all([
-          get().loadExperiences(),
-          get().loadEducation(),
-          get().loadSkills(),
-          get().loadCertifications(),
-        ])
-      }
-    } catch (error) {
-      useAppStore.getState().addToast({
-        type: 'error',
-        title: 'Error loading profile',
-        message: error instanceof Error ? error.message : 'Failed to load profile',
-      })
-      // rethrow to let callers know
-      throw error
-    } finally {
-      set({ isLoading: false })
+export const useProfileStore = create<ProfileState>((set, get) => {
+  const createEntityHelpers = (
+    entityName: 'Experiences' | 'Education' | 'Skills' | 'Certifications',
+    pluralName: 'experiences' | 'education' | 'skills' | 'certifications',
+    apiGet: 'getExperiences' | 'getEducation' | 'getSkills' | 'getCertifications',
+    apiSave: 'saveExperience' | 'saveEducation' | 'saveSkill' | 'saveCertification',
+    apiDelete: 'deleteExperience' | 'deleteEducation' | 'deleteSkill' | 'deleteCertification'
+  ) => ({
+    [`load${entityName}`]: async () => {
+      const profile = get().profile
+      if (!profile?.id) return
+      // We use 'any' to bypass TS complains about indexing window.api with string
+      const data = await (window.api as any)[apiGet](profile.id)
+      set({ [pluralName]: data } as any)
+    },
+    [`save${entityName.replace('Experiences', 'Experience').replace('Certifications', 'Certification').replace('Skills', 'Skill')}`]: async (item: any) => {
+      const saved = await (window.api as any)[apiSave](item)
+      await get()[`load${entityName}`]()
+      return saved
+    },
+    [`delete${entityName.replace('Experiences', 'Experience').replace('Certifications', 'Certification').replace('Skills', 'Skill')}`]: async (id: number) => {
+      await (window.api as any)[apiDelete](id)
+      await get()[`load${entityName}`]()
     }
-  },
+  });
 
-  saveProfile: async (profileData: Profile) => {
-    const saved = await window.api.saveProfile(profileData)
-    set({ profile: saved })
-    return saved
-  },
+  return {
+    profile: null,
+    experiences: [],
+    education: [],
+    skills: [],
+    certifications: [],
+    isLoading: false,
 
-  loadExperiences: async () => {
-    const profile = get().profile
-    if (!profile?.id) return
-    const experiences = await window.api.getExperiences(profile.id)
-    set({ experiences })
-  },
+    loadProfile: async () => {
+      set({ isLoading: true })
+      try {
+        const profile = await window.api.getProfile()
+        set({ profile })
+        if (profile?.id) {
+          await Promise.all([
+            get().loadExperiences(),
+            get().loadEducation(),
+            get().loadSkills(),
+            get().loadCertifications(),
+          ])
+        }
+      } catch (error) {
+        useAppStore.getState().addToast({
+          type: 'error',
+          title: 'Error loading profile',
+          message: error instanceof Error ? error.message : 'Failed to load profile',
+        })
+        throw error
+      } finally {
+        set({ isLoading: false })
+      }
+    },
 
-  saveExperience: async (exp: Experience) => {
-    const saved = await window.api.saveExperience(exp)
-    await get().loadExperiences()
-    return saved
-  },
+    saveProfile: async (profileData: Profile) => {
+      const saved = await window.api.saveProfile(profileData)
+      set({ profile: saved })
+      return saved
+    },
 
-  deleteExperience: async (id: number) => {
-    await window.api.deleteExperience(id)
-    await get().loadExperiences()
-  },
-
-  loadEducation: async () => {
-    const profile = get().profile
-    if (!profile?.id) return
-    const education = await window.api.getEducation(profile.id)
-    set({ education })
-  },
-
-  saveEducation: async (edu: Education) => {
-    const saved = await window.api.saveEducation(edu)
-    await get().loadEducation()
-    return saved
-  },
-
-  deleteEducation: async (id: number) => {
-    await window.api.deleteEducation(id)
-    await get().loadEducation()
-  },
-
-  loadSkills: async () => {
-    const profile = get().profile
-    if (!profile?.id) return
-    const skills = await window.api.getSkills(profile.id)
-    set({ skills })
-  },
-
-  saveSkill: async (skill: Skill) => {
-    const saved = await window.api.saveSkill(skill)
-    await get().loadSkills()
-    return saved
-  },
-
-  deleteSkill: async (id: number) => {
-    await window.api.deleteSkill(id)
-    await get().loadSkills()
-  },
-
-  loadCertifications: async () => {
-    const profile = get().profile
-    if (!profile?.id) return
-    const certifications = await window.api.getCertifications(profile.id)
-    set({ certifications })
-  },
-
-  saveCertification: async (cert: Certification) => {
-    const saved = await window.api.saveCertification(cert)
-    await get().loadCertifications()
-    return saved
-  },
-
-  deleteCertification: async (id: number) => {
-    await window.api.deleteCertification(id)
-    await get().loadCertifications()
-  },
-}))
+    ...(createEntityHelpers('Experiences', 'experiences', 'getExperiences', 'saveExperience', 'deleteExperience') as any),
+    ...(createEntityHelpers('Education', 'education', 'getEducation', 'saveEducation', 'deleteEducation') as any),
+    ...(createEntityHelpers('Skills', 'skills', 'getSkills', 'saveSkill', 'deleteSkill') as any),
+    ...(createEntityHelpers('Certifications', 'certifications', 'getCertifications', 'saveCertification', 'deleteCertification') as any),
+  };
+});

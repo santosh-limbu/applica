@@ -4,238 +4,73 @@
 
 import { ipcMain } from 'electron';
 import * as db from '../services/database.service';
-import type {
-  Profile,
-  Experience,
-  Education,
-  Skill,
-  Certification,
-  Application,
-  CV,
-  CoverLetter
-} from '../types';
+
+/**
+ * Helper to register standard IPC handlers that wrap a service function
+ * in a try/catch block, with consistent error handling and defaults.
+ */
+function registerHandler(channel: string, dbFunction: (...args: any[]) => any, defaultReturnValue?: any) {
+  ipcMain.handle(channel, (_event, ...args) => {
+    try {
+      return dbFunction(...args);
+    } catch (err) {
+      console.error(`[IPC:${channel}]`, err);
+
+      const isReadOp = channel.startsWith('get');
+      if (isReadOp) {
+        return defaultReturnValue !== undefined ? defaultReturnValue : [];
+      }
+
+      let action = 'process';
+      if (channel.startsWith('save')) action = 'save';
+      else if (channel.startsWith('delete')) action = 'delete';
+      else if (channel.startsWith('update')) action = 'update';
+
+      // Extract entity name, e.g. "saveProfile" -> "profile"
+      const entity = channel.replace(/^(save|delete|update|get)/, '').replace(/([A-Z])/g, ' $1').trim().toLowerCase();
+
+      throw new Error(`Failed to ${action} ${entity}: ${(err as Error).message}`);
+    }
+  });
+}
 
 export function registerDbHandlers(): void {
   // ── Profile ──────────────────────────────────────────────────
-
-  ipcMain.handle('getProfile', () => {
-    try {
-      return db.getProfile();
-    } catch (err) {
-      console.error('[IPC:getProfile]', err);
-      return null;
-    }
-  });
-
-  ipcMain.handle('saveProfile', (_event, profile: Profile) => {
-    try {
-      return db.saveProfile(profile);
-    } catch (err) {
-      console.error('[IPC:saveProfile]', err);
-      throw new Error(`Failed to save profile: ${(err as Error).message}`);
-    }
-  });
+  registerHandler('getProfile', db.getProfile, null);
+  registerHandler('saveProfile', db.saveProfile);
 
   // ── Experiences ──────────────────────────────────────────────
-
-  ipcMain.handle('getExperiences', (_event, profileId: number) => {
-    try {
-      return db.getExperiences(profileId);
-    } catch (err) {
-      console.error('[IPC:getExperiences]', err);
-      return [];
-    }
-  });
-
-  ipcMain.handle('saveExperience', (_event, exp: Experience) => {
-    try {
-      return db.saveExperience(exp);
-    } catch (err) {
-      console.error('[IPC:saveExperience]', err);
-      throw new Error(`Failed to save experience: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('deleteExperience', (_event, id: number) => {
-    try {
-      db.deleteExperience(id);
-    } catch (err) {
-      console.error('[IPC:deleteExperience]', err);
-      throw new Error(`Failed to delete experience: ${(err as Error).message}`);
-    }
-  });
+  registerHandler('getExperiences', db.getExperiences, []);
+  registerHandler('saveExperience', db.saveExperience);
+  registerHandler('deleteExperience', db.deleteExperience);
 
   // ── Education ────────────────────────────────────────────────
-
-  ipcMain.handle('getEducation', (_event, profileId: number) => {
-    try {
-      return db.getEducation(profileId);
-    } catch (err) {
-      console.error('[IPC:getEducation]', err);
-      return [];
-    }
-  });
-
-  ipcMain.handle('saveEducation', (_event, edu: Education) => {
-    try {
-      return db.saveEducation(edu);
-    } catch (err) {
-      console.error('[IPC:saveEducation]', err);
-      throw new Error(`Failed to save education: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('deleteEducation', (_event, id: number) => {
-    try {
-      db.deleteEducation(id);
-    } catch (err) {
-      console.error('[IPC:deleteEducation]', err);
-      throw new Error(`Failed to delete education: ${(err as Error).message}`);
-    }
-  });
+  registerHandler('getEducation', db.getEducation, []);
+  registerHandler('saveEducation', db.saveEducation);
+  registerHandler('deleteEducation', db.deleteEducation);
 
   // ── Skills ───────────────────────────────────────────────────
-
-  ipcMain.handle('getSkills', (_event, profileId: number) => {
-    try {
-      return db.getSkills(profileId);
-    } catch (err) {
-      console.error('[IPC:getSkills]', err);
-      return [];
-    }
-  });
-
-  ipcMain.handle('saveSkill', (_event, skill: Skill) => {
-    try {
-      return db.saveSkill(skill);
-    } catch (err) {
-      console.error('[IPC:saveSkill]', err);
-      throw new Error(`Failed to save skill: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('deleteSkill', (_event, id: number) => {
-    try {
-      db.deleteSkill(id);
-    } catch (err) {
-      console.error('[IPC:deleteSkill]', err);
-      throw new Error(`Failed to delete skill: ${(err as Error).message}`);
-    }
-  });
+  registerHandler('getSkills', db.getSkills, []);
+  registerHandler('saveSkill', db.saveSkill);
+  registerHandler('deleteSkill', db.deleteSkill);
 
   // ── Certifications ───────────────────────────────────────────
-
-  ipcMain.handle('getCertifications', (_event, profileId: number) => {
-    try {
-      return db.getCertifications(profileId);
-    } catch (err) {
-      console.error('[IPC:getCertifications]', err);
-      return [];
-    }
-  });
-
-  ipcMain.handle('saveCertification', (_event, cert: Certification) => {
-    try {
-      return db.saveCertification(cert);
-    } catch (err) {
-      console.error('[IPC:saveCertification]', err);
-      throw new Error(`Failed to save certification: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('deleteCertification', (_event, id: number) => {
-    try {
-      db.deleteCertification(id);
-    } catch (err) {
-      console.error('[IPC:deleteCertification]', err);
-      throw new Error(`Failed to delete certification: ${(err as Error).message}`);
-    }
-  });
+  registerHandler('getCertifications', db.getCertifications, []);
+  registerHandler('saveCertification', db.saveCertification);
+  registerHandler('deleteCertification', db.deleteCertification);
 
   // ── Applications ─────────────────────────────────────────────
-
-  ipcMain.handle('getApplications', () => {
-    try {
-      return db.getApplications();
-    } catch (err) {
-      console.error('[IPC:getApplications]', err);
-      return [];
-    }
-  });
-
-  ipcMain.handle('getApplication', (_event, id: number) => {
-    try {
-      return db.getApplicationById(id);
-    } catch (err) {
-      console.error('[IPC:getApplication]', err);
-      return null;
-    }
-  });
-
-  ipcMain.handle('saveApplication', (_event, application: Application) => {
-    try {
-      return db.saveApplication(application);
-    } catch (err) {
-      console.error('[IPC:saveApplication]', err);
-      throw new Error(`Failed to save application: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('updateApplicationStatus', (_event, id: number, status: string) => {
-    try {
-      db.updateApplicationStatus(id, status);
-    } catch (err) {
-      console.error('[IPC:updateApplicationStatus]', err);
-      throw new Error(`Failed to update application status: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('deleteApplication', (_event, id: number) => {
-    try {
-      db.deleteApplication(id);
-    } catch (err) {
-      console.error('[IPC:deleteApplication]', err);
-      throw new Error(`Failed to delete application: ${(err as Error).message}`);
-    }
-  });
+  registerHandler('getApplications', db.getApplications, []);
+  registerHandler('getApplication', db.getApplicationById, null);
+  registerHandler('saveApplication', db.saveApplication);
+  registerHandler('updateApplicationStatus', db.updateApplicationStatus);
+  registerHandler('deleteApplication', db.deleteApplication);
 
   // ── CVs ──────────────────────────────────────────────────────
-
-  ipcMain.handle('saveCv', (_event, cv: CV) => {
-    try {
-      return db.saveCv(cv);
-    } catch (err) {
-      console.error('[IPC:saveCv]', err);
-      throw new Error(`Failed to save CV: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('getCvs', (_event, applicationId: number) => {
-    try {
-      return db.getCvs(applicationId);
-    } catch (err) {
-      console.error('[IPC:getCvs]', err);
-      return [];
-    }
-  });
+  registerHandler('saveCv', db.saveCv);
+  registerHandler('getCvs', db.getCvs, []);
 
   // ── Cover Letters ────────────────────────────────────────────
-
-  ipcMain.handle('saveCoverLetter', (_event, cl: CoverLetter) => {
-    try {
-      return db.saveCoverLetter(cl);
-    } catch (err) {
-      console.error('[IPC:saveCoverLetter]', err);
-      throw new Error(`Failed to save cover letter: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('getCoverLetters', (_event, applicationId: number) => {
-    try {
-      return db.getCoverLetters(applicationId);
-    } catch (err) {
-      console.error('[IPC:getCoverLetters]', err);
-      return [];
-    }
-  });
+  registerHandler('saveCoverLetter', db.saveCoverLetter);
+  registerHandler('getCoverLetters', db.getCoverLetters, []);
 }

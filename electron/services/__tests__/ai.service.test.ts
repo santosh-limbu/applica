@@ -1,10 +1,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import * as aiService from '../services/ai.service';
-import * as db from '../services/database.service';
-import * as storage from '../services/storage.service';
+import * as aiService from '../ai.service';
+import * as db from '../database.service';
+import * as storage from '../storage.service';
 
-vi.mock('../services/database.service');
-vi.mock('../services/storage.service');
+vi.mock('../database.service');
+vi.mock('../storage.service');
 
 describe('AI Config Service', () => {
   beforeEach(() => {

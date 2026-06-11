@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { OpenAICompatProvider } from './openai-compat.provider';
+import { OpenAICompatProvider } from '../openai-compat.provider';
 
 describe('OpenAICompatProvider', () => {
   const mockEndpoint = 'http://localhost:1234/v1';
