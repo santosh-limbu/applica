@@ -14,6 +14,8 @@ import {
   Globe,
   PlusCircle,
   X,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { useProfileStore } from '@/stores/profile.store'
 import { useAppStore } from '@/stores/app.store'
@@ -730,9 +732,13 @@ function ExpandableText({ text, maxLines = 3 }: { text: string; maxLines?: numbe
         {text}
       </div>
       {isLong && (
-        <span className="text-[10px] text-accent font-semibold mt-1 block select-none">
-          {isExpanded ? 'Show less ▲' : 'Show more ▼'}
-        </span>
+        <div className="flex justify-end mt-0.5 select-none">
+          {isExpanded ? (
+            <ChevronUp size={14} className="text-accent" />
+          ) : (
+            <ChevronDown size={14} className="text-accent" />
+          )}
+        </div>
       )}
     </div>
   )
