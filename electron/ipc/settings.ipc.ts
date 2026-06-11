@@ -1,3 +1,4 @@
+
 // ============================================================
 // Applica — Settings & Storage IPC Handlers
 // ============================================================
@@ -14,18 +15,31 @@ import {
 } from '../services/ai.service';
 import { AVAILABLE_PROVIDERS, type ProviderConfig } from '../services/ai-provider.interface';
 
-export function registerSettingsHandlers(): void {
-  // ── App Settings (key-value store) ───────────────────────────
-
-  ipcMain.handle('getSettings', (_event, key: string) => {
+/**
+ * Helper to register standard Settings/Storage IPC handlers that wrap a service function
+ * in a try/catch block, with consistent error handling and defaults.
+ */
+function registerHandler(channel: string, serviceFunction: (...args: any[]) => any, defaultReturnValue?: any, isWrite = false) {
+  ipcMain.handle(channel, async (_event, ...args) => {
     try {
-      return db.getSetting(key);
+      return await serviceFunction(...args);
     } catch (err) {
-      console.error('[IPC:getSettings]', err);
-      return null;
+      console.error(`[IPC:${channel}]`, err);
+      if (isWrite) {
+        // Extract what failed, e.g. "saveProviderConfig" -> "ProviderConfig"
+        const entity = channel.replace(/^(save|set)/, '');
+        throw new Error(`Failed to save ${entity.toLowerCase()}: ${(err as Error).message}`);
+      }
+      return defaultReturnValue !== undefined ? defaultReturnValue : null;
     }
   });
+}
 
+export function registerSettingsHandlers(): void {
+  // ── App Settings (key-value store) ───────────────────────────
+  registerHandler('getSettings', db.getSetting, null);
+
+  // Custom for setSettings since its error message is slightly different
   ipcMain.handle('setSettings', (_event, key: string, value: string) => {
     try {
       db.setSetting(key, value);
@@ -36,40 +50,14 @@ export function registerSettingsHandlers(): void {
   });
 
   // ── Secure API Key Storage ───────────────────────────────────
-
-  ipcMain.handle('saveApiKey', (_event, key: string) => {
-    try {
-      storage.saveApiKey(key);
-    } catch (err) {
-      console.error('[IPC:saveApiKey]', err);
-      throw new Error(`Failed to save API key: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('getApiKey', () => {
-    try {
-      return storage.getApiKey();
-    } catch (err) {
-      console.error('[IPC:getApiKey]', err);
-      return null;
-    }
-  });
-
-  ipcMain.handle('testApiKey', async (_event, key: string) => {
-    try {
-      return await testConnection(key);
-    } catch (err) {
-      console.error('[IPC:testApiKey]', err);
-      return false;
-    }
-  });
+  registerHandler('saveApiKey', storage.saveApiKey, null, true);
+  registerHandler('getApiKey', storage.getApiKey, null);
+  registerHandler('testApiKey', testConnection, false);
 
   // ── AI Provider Management ───────────────────────────────────
+  ipcMain.handle('getAvailableProviders', () => AVAILABLE_PROVIDERS);
 
-  ipcMain.handle('getAvailableProviders', () => {
-    return AVAILABLE_PROVIDERS;
-  });
-
+  // Custom for getProviderConfig due to key masking
   ipcMain.handle('getProviderConfig', () => {
     try {
       const config = getProviderConfig();
@@ -84,46 +72,14 @@ export function registerSettingsHandlers(): void {
     }
   });
 
-  ipcMain.handle('saveProviderConfig', (_event, config: ProviderConfig) => {
-    try {
-      saveProviderConfig(config);
-    } catch (err) {
-      console.error('[IPC:saveProviderConfig]', err);
-      throw new Error(`Failed to save provider config: ${(err as Error).message}`);
-    }
-  });
-
-  ipcMain.handle('testProviderConnection', async (_event, config: ProviderConfig) => {
-    try {
-      return await testProviderConnection(config);
-    } catch (err) {
-      console.error('[IPC:testProviderConnection]', err);
-      return false;
-    }
-  });
-
-  ipcMain.handle('listProviderModels', async (_event, config: ProviderConfig) => {
-    try {
-      return await listProviderModels(config);
-    } catch (err) {
-      console.error('[IPC:listProviderModels]', err);
-      return [];
-    }
-  });
+  registerHandler('saveProviderConfig', saveProviderConfig, null, true);
+  registerHandler('testProviderConnection', testProviderConnection, false);
+  registerHandler('listProviderModels', listProviderModels, []);
 
   // ── First Run Check ──────────────────────────────────────────
-
-  ipcMain.handle('isFirstRun', () => {
-    try {
-      return db.isFirstRun();
-    } catch (err) {
-      console.error('[IPC:isFirstRun]', err);
-      return true;
-    }
-  });
+  registerHandler('isFirstRun', db.isFirstRun, true);
 
   // ── App Version (synchronous) ────────────────────────────────
-
   ipcMain.on('getAppVersion', (event) => {
     event.returnValue = app.getVersion();
   });
