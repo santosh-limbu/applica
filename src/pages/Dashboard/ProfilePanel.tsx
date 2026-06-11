@@ -403,17 +403,15 @@ export default function ProfilePanel() {
               <div className="flex flex-col gap-3">
                 {experiences.length > 0 ? (
                   experiences.map((exp) => (
-                    <div key={exp.id} className="p-3 bg-surface rounded-lg border border-default flex flex-col gap-1 relative group">
-                      <div className="flex justify-between items-start pr-12">
-                        <div>
-                          <span className="font-semibold text-primary block text-xs">{exp.role}</span>
-                          <span className="text-tertiary text-xs">{exp.company} {exp.location && `· ${exp.location}`}</span>
-                        </div>
+                    <div key={exp.id} className="p-3 bg-surface rounded-lg border border-default flex flex-col gap-1 relative group min-w-0">
+                      <div className="pr-10">
+                        <div className="font-semibold text-primary text-xs break-words leading-snug">{exp.role}</div>
+                        <div className="text-tertiary text-xs mt-0.5 break-words">{exp.company} {exp.location && `· ${exp.location}`}</div>
+                        <div className="text-[10px] text-tertiary font-medium mt-1">{exp.start_date} - {exp.end_date || 'Present'}</div>
+                        {exp.description && <p className="text-tertiary text-xs leading-normal mt-1 break-words">{exp.description}</p>}
                       </div>
-                      <span className="text-[10px] text-tertiary font-medium">{exp.start_date} - {exp.end_date || 'Present'}</span>
-                      {exp.description && <p className="text-tertiary text-xs leading-normal mt-1 truncate max-w-[280px]">{exp.description}</p>}
                       
-                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface/80 pl-1 rounded">
                         <button
                           onClick={() => setExperienceModal({ open: true, data: exp })}
                           className="p-1 text-tertiary hover:text-accent rounded hover:bg-subtle transition-colors"
@@ -457,16 +455,16 @@ export default function ProfilePanel() {
               <div className="flex flex-col gap-3">
                 {education.length > 0 ? (
                   education.map((edu) => (
-                    <div key={edu.id} className="p-3 bg-surface rounded-lg border border-default flex flex-col gap-1 relative group">
-                      <div className="flex justify-between items-start pr-12">
-                        <div>
-                          <span className="font-semibold text-primary block text-xs">{edu.degree}</span>
-                          <span className="text-tertiary text-xs">{edu.institution}</span>
-                        </div>
+                    <div key={edu.id} className="p-3 bg-surface rounded-lg border border-default flex flex-col gap-1 relative group min-w-0">
+                      <div className="pr-10">
+                        <div className="font-semibold text-primary text-xs break-words leading-snug">{edu.degree}</div>
+                        <div className="text-tertiary text-xs mt-0.5 break-words">{edu.institution}</div>
+                        <div className="text-[10px] text-tertiary font-medium mt-1">{edu.start_date} - {edu.end_date || 'Ongoing'}</div>
+                        {edu.grade && <div className="text-[10px] text-accent font-medium mt-0.5">Grade: {edu.grade}</div>}
+                        {edu.description && <p className="text-tertiary text-xs leading-normal mt-1 break-words">{edu.description}</p>}
                       </div>
-                      <span className="text-[10px] text-tertiary font-medium">{edu.start_date} - {edu.end_date || 'Ongoing'}</span>
                       
-                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface/80 pl-1 rounded">
                         <button
                           onClick={() => setEducationModal({ open: true, data: edu })}
                           className="p-1 text-tertiary hover:text-accent rounded hover:bg-subtle transition-colors"
@@ -507,16 +505,14 @@ export default function ProfilePanel() {
               <div className="flex flex-col gap-3">
                 {certifications.length > 0 ? (
                   certifications.map((cert) => (
-                    <div key={cert.id} className="p-3 bg-surface rounded-lg border border-default flex flex-col gap-1 relative group">
-                      <div className="flex justify-between items-start pr-12">
-                        <div>
-                          <span className="font-semibold text-primary block text-xs">{cert.name}</span>
-                          <span className="text-tertiary text-xs">{cert.issuer}</span>
-                        </div>
+                    <div key={cert.id} className="p-3 bg-surface rounded-lg border border-default flex flex-col gap-1 relative group min-w-0">
+                      <div className="pr-10">
+                        <div className="font-semibold text-primary text-xs break-words leading-snug">{cert.name}</div>
+                        <div className="text-tertiary text-xs mt-0.5 break-words">{cert.issuer}</div>
+                        <div className="text-[10px] text-tertiary font-medium mt-1">Obtained: {cert.date_obtained || 'N/A'}</div>
                       </div>
-                      <span className="text-[10px] text-tertiary font-medium">Obtained: {cert.date_obtained || 'N/A'}</span>
                       
-                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                      <div className="absolute right-2 top-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity bg-surface/80 pl-1 rounded">
                         <button
                           onClick={() => setCertModal({ open: true, data: cert })}
                           className="p-1 text-tertiary hover:text-accent rounded hover:bg-subtle transition-colors"

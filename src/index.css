@@ -981,6 +981,8 @@ p {
 .justify-end     { justify-content: flex-end; }
 .grid            { display: grid; }
 .inline-flex     { display: inline-flex; }
+.block           { display: block; }
+.hidden          { display: none; }
 
 /* Gap */
 .gap-1  { gap: var(--space-1); }
