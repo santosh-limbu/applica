@@ -17,7 +17,11 @@ export interface AIProvider {
    * Send a prompt and receive a text response.
    * This is the single method all AI features route through.
    */
-  generateText(prompt: string, systemPrompt?: string): Promise<string>;
+  generateText(
+    prompt: string,
+    systemPrompt?: string,
+    onToken?: (token: string) => void
+  ): Promise<string>;
 
   /**
    * List available models from the provider.

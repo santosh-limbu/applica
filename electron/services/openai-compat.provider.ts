@@ -117,10 +117,16 @@ export class OpenAICompatProvider implements AIProvider {
     return serverAlive;
   }
 
-  async generateText(prompt: string, systemPrompt?: string): Promise<string> {
+  async generateText(
+    prompt: string,
+    systemPrompt?: string,
+    onToken?: (token: string) => void
+  ): Promise<string> {
     const messages: Array<{ role: string; content: string }> = systemPrompt 
       ? [{ role: 'system', content: systemPrompt }, { role: 'user', content: prompt }]
       : [{ role: 'user', content: prompt }];
+
+    const useStreaming = typeof onToken === 'function';
 
     const response = await fetch(`${this.baseUrl}/v1/chat/completions`, {
       method: 'POST',
@@ -130,6 +136,7 @@ export class OpenAICompatProvider implements AIProvider {
         messages,
         temperature: 0.4,
         max_tokens: 4096, // Ensure local reasoning models have enough tokens to finish thinking
+        stream: useStreaming,
       }),
       signal: AbortSignal.timeout(120000), // 2min timeout — local models can be slow
     });
@@ -139,21 +146,82 @@ export class OpenAICompatProvider implements AIProvider {
       throw new Error(`AI request failed (${response.status}): ${errorText}`);
     }
 
-    const data = (await response.json()) as ChatCompletionResponse;
-    let content = data.choices?.[0]?.message?.content;
-    const reasoningContent = data.choices?.[0]?.message?.reasoning_content;
+    if (useStreaming) {
+      if (!response.body) {
+        throw new Error('Response body is empty.');
+      }
 
-    // Fallback: If content is empty or only whitespace, and reasoning_content is present,
-    // use reasoning_content. This prevents failures with local reasoning models (e.g. DeepSeek-R1-distill).
-    if ((!content || !content.trim()) && reasoningContent && reasoningContent.trim()) {
-      content = reasoningContent;
+      const decoder = new TextDecoder();
+      let content = '';
+      let reasoningContent = '';
+      let buffer = '';
+
+      for await (const chunk of response.body as any) {
+        const chunkText = typeof chunk === 'string' ? chunk : decoder.decode(chunk, { stream: true });
+        buffer += chunkText;
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+
+        let streamEnded = false;
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed) continue;
+          if (trimmed === 'data: [DONE]') {
+            streamEnded = true;
+            break;
+          }
+          if (trimmed.startsWith('data: ')) {
+            try {
+              const parsed = JSON.parse(trimmed.slice(6));
+              const delta = parsed.choices?.[0]?.delta?.content || '';
+              const rDelta = parsed.choices?.[0]?.delta?.reasoning_content || '';
+
+              if (delta) {
+                content += delta;
+                onToken!(delta);
+              }
+              if (rDelta) {
+                reasoningContent += rDelta;
+                onToken!(rDelta); // also stream reasoning tokens so the user sees progress!
+              }
+            } catch (e) {
+              // Ignore incomplete JSON chunks
+            }
+          }
+        }
+        if (streamEnded) {
+          break;
+        }
+      }
+
+      // Fallback: If content is empty or only whitespace, and reasoningContent is present,
+      // use reasoningContent. This prevents failures with local reasoning models (e.g. DeepSeek-R1-distill).
+      if ((!content || !content.trim()) && reasoningContent && reasoningContent.trim()) {
+        content = reasoningContent;
+      }
+
+      if (!content) {
+        throw new Error('AI returned an empty response.');
+      }
+
+      return content;
+    } else {
+      const data = (await response.json()) as ChatCompletionResponse;
+      let content = data.choices?.[0]?.message?.content;
+      const reasoningContent = data.choices?.[0]?.message?.reasoning_content;
+
+      // Fallback: If content is empty or only whitespace, and reasoning_content is present,
+      // use reasoning_content. This prevents failures with local reasoning models (e.g. DeepSeek-R1-distill).
+      if ((!content || !content.trim()) && reasoningContent && reasoningContent.trim()) {
+        content = reasoningContent;
+      }
+
+      if (!content) {
+        throw new Error('AI returned an empty response.');
+      }
+
+      return content;
     }
-
-    if (!content) {
-      throw new Error('AI returned an empty response.');
-    }
-
-    return content;
   }
 
   async listModels(): Promise<string[]> {

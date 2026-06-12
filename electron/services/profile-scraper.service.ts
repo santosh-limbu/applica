@@ -54,11 +54,26 @@ export async function completeLinkedInScrape(): Promise<string> {
   }
 
   try {
-    const text = await scraperWindow.webContents.executeJavaScript('document.body.innerText');
+    // Implement a 5-second timeout for executing Javascript to prevent hanging
+    const textPromise = scraperWindow.webContents.executeJavaScript('document.body.innerText');
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Text extraction timed out')), 5000)
+    );
+
+    const text = await Promise.race([textPromise, timeoutPromise]);
+    
     scraperWindow.close();
     scraperWindow = null;
     return text as string;
   } catch (err) {
+    try {
+      if (scraperWindow && !scraperWindow.isDestroyed()) {
+        scraperWindow.close();
+      }
+    } catch {
+      // Ignore window close errors during failure cleanup
+    }
+    scraperWindow = null;
     throw new Error(`Failed to extract text from browser page: ${(err as Error).message}`);
   }
 }

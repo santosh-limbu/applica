@@ -141,6 +141,45 @@ describe('OpenAICompatProvider', () => {
       expect(result).toBe(mockReasoning);
       expect(global.fetch).toHaveBeenCalledTimes(1);
     });
+
+    it('should request streaming and call onToken for each chunk', async () => {
+      // Arrange
+      const chunks = [
+        'data: {"choices": [{"delta": {"content": "Hello"}}]}\n',
+        'data: {"choices": [{"delta": {"content": " World"}}]}\n',
+        'data: [DONE]\n'
+      ];
+      
+      const readableStream = {
+        [Symbol.asyncIterator]: async function* () {
+          for (const chunk of chunks) {
+            yield new TextEncoder().encode(chunk);
+          }
+        }
+      };
+
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        body: readableStream
+      });
+
+      const onToken = vi.fn();
+
+      // Act
+      const result = await provider.generateText('User prompt', undefined, onToken);
+
+      // Assert
+      expect(result).toBe('Hello World');
+      expect(onToken).toHaveBeenCalledTimes(2);
+      expect(onToken).toHaveBeenNthCalledWith(1, 'Hello');
+      expect(onToken).toHaveBeenNthCalledWith(2, ' World');
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+
+      const fetchCallArgs = (global.fetch as any).mock.calls[0];
+      const fetchInit = fetchCallArgs[1];
+      const requestBody = JSON.parse(fetchInit.body);
+      expect(requestBody.stream).toBe(true);
+    });
   });
 
   describe('listModels', () => {
