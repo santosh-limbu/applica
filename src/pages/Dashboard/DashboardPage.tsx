@@ -243,7 +243,7 @@ export default function DashboardPage() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="empty-state bg-surface rounded-xl border border-default p-12">
+            <div className="empty-state">
               <h3 className="empty-state-title">
                 {applications.length === 0 ? 'No applications yet' : 'No matching applications'}
               </h3>
