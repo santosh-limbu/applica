@@ -119,7 +119,7 @@ function createTables(): void {
 
     CREATE TABLE IF NOT EXISTS cvs (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      application_id INTEGER REFERENCES applications(id),
+      application_id INTEGER REFERENCES applications(id) ON DELETE CASCADE,
       profile_id INTEGER NOT NULL REFERENCES profiles(id),
       title TEXT NOT NULL,
       template_id TEXT NOT NULL,
@@ -132,7 +132,7 @@ function createTables(): void {
 
     CREATE TABLE IF NOT EXISTS cover_letters (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      application_id INTEGER REFERENCES applications(id),
+      application_id INTEGER REFERENCES applications(id) ON DELETE CASCADE,
       profile_id INTEGER NOT NULL REFERENCES profiles(id),
       content TEXT NOT NULL,
       version INTEGER DEFAULT 1,
@@ -143,7 +143,7 @@ function createTables(): void {
 
     CREATE TABLE IF NOT EXISTS reminders (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      application_id INTEGER NOT NULL REFERENCES applications(id),
+      application_id INTEGER NOT NULL REFERENCES applications(id) ON DELETE CASCADE,
       remind_at DATETIME NOT NULL,
       message TEXT,
       is_completed INTEGER DEFAULT 0,
@@ -529,7 +529,13 @@ export function updateApplicationStatus(id: number, status: string): void {
 }
 
 export function deleteApplication(id: number): void {
-  db.prepare('DELETE FROM applications WHERE id = ?').run(id);
+  const deleteTx = db.transaction((appId: number) => {
+    db.prepare('DELETE FROM cvs WHERE application_id = ?').run(appId);
+    db.prepare('DELETE FROM cover_letters WHERE application_id = ?').run(appId);
+    db.prepare('DELETE FROM reminders WHERE application_id = ?').run(appId);
+    db.prepare('DELETE FROM applications WHERE id = ?').run(appId);
+  });
+  deleteTx(id);
 }
 
 // ── CVs ──────────────────────────────────────────────────────
