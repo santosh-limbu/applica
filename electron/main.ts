@@ -38,7 +38,7 @@ function createWindow(): void {
     height: 800,
     minWidth: 1024,
     minHeight: 700,
-    title: 'Applica',
+    title: 'Applicai',
     show: false, // Show after ready-to-show to avoid visual flash
     titleBarStyle: 'hidden',
     titleBarOverlay: {

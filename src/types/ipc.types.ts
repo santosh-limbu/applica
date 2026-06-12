@@ -209,6 +209,9 @@ export interface ElectronAPI {
   scoreATS: (cvContent: string, jobDescription: string) => Promise<ATSScore>
   getDefaultSystemPrompts: () => Promise<Record<string, string>>
   scrapeJobUrl: (url: string) => Promise<ScrapedJob>
+  openLinkedInScraper: (url: string) => Promise<void>
+  completeLinkedInScrape: () => Promise<string>
+  parseProfileText: (text: string) => Promise<any>
   exportPDF: (html: string, fileName: string, outputDir?: string) => Promise<string | null>
   exportDOCX: (cvData: any, templateId: string, fileName: string, outputDir?: string) => Promise<string | null>
   saveCv: (cv: CV) => Promise<CV>

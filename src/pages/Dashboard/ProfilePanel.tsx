@@ -23,6 +23,7 @@ import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Modal from '@/components/ui/Modal'
+import LinkedInImportModal from '@/components/profile/LinkedInImportModal'
 import type { Experience, Education, Skill, Certification } from '@/types/ipc.types'
 
 export default function ProfilePanel() {
@@ -63,6 +64,7 @@ export default function ProfilePanel() {
   const [certModal, setCertModal] = useState<{ open: boolean; data?: Partial<Certification> }>({
     open: false,
   })
+  const [linkedinModalOpen, setLinkedinModalOpen] = useState(false)
 
   // Delete confirmation state
   const [deleteConfirm, setDeleteConfirm] = useState<{
@@ -266,6 +268,13 @@ export default function ProfilePanel() {
               title="Edit Profile Info"
             >
               <Edit2 size={14} />
+            </button>
+            <button
+              onClick={() => setLinkedinModalOpen(true)}
+              className="text-tertiary hover:text-accent p-1 rounded transition-colors"
+              title="Sync LinkedIn Profile"
+            >
+              <Linkedin size={14} />
             </button>
           </h3>
           <p className="text-sm text-tertiary mt-1 flex items-center justify-center gap-1">
@@ -728,6 +737,10 @@ export default function ProfilePanel() {
           Are you sure you want to delete <strong className="text-primary">{deleteConfirm?.title}</strong>? This action cannot be undone.
         </p>
       </Modal>
+      <LinkedInImportModal
+        open={linkedinModalOpen}
+        onClose={() => setLinkedinModalOpen(false)}
+      />
     </>
   )
 }

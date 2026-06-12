@@ -4,6 +4,8 @@
 
 import { ipcMain } from 'electron';
 import { scrapeJobUrl } from '../services/scraper.service';
+import { openLinkedInScraper, completeLinkedInScrape } from '../services/profile-scraper.service';
+import { parseProfileFromText } from '../services/ai.service';
 
 export function registerScraperHandlers(): void {
   ipcMain.handle('scrapeJobUrl', async (_event, url: string) => {
@@ -25,4 +27,35 @@ export function registerScraperHandlers(): void {
       throw new Error(`Scraping failed: ${(err as Error).message}`);
     }
   });
+
+  ipcMain.handle('openLinkedInScraper', async (_event, url: string) => {
+    try {
+      return await openLinkedInScraper(url);
+    } catch (err) {
+      console.error('[IPC:openLinkedInScraper]', err);
+      throw new Error(`Failed to open LinkedIn browser: ${(err as Error).message}`);
+    }
+  });
+
+  ipcMain.handle('completeLinkedInScrape', async () => {
+    try {
+      return await completeLinkedInScrape();
+    } catch (err) {
+      console.error('[IPC:completeLinkedInScrape]', err);
+      throw new Error(`Failed to complete scraping: ${(err as Error).message}`);
+    }
+  });
+
+  ipcMain.handle('parseProfileText', async (_event, text: string) => {
+    try {
+      if (!text || typeof text !== 'string') {
+        throw new Error('Valid text content is required.');
+      }
+      return await parseProfileFromText(text);
+    } catch (err) {
+      console.error('[IPC:parseProfileText]', err);
+      throw new Error(`Failed to parse profile: ${(err as Error).message}`);
+    }
+  });
 }
+

@@ -71,6 +71,9 @@ contextBridge.exposeInMainWorld('api', {
 
   // ── Scraper ──────────────────────────────────────────────────
   scrapeJobUrl: (url: string) => ipcRenderer.invoke('scrapeJobUrl', url),
+  openLinkedInScraper: (url: string) => ipcRenderer.invoke('openLinkedInScraper', url),
+  completeLinkedInScrape: () => ipcRenderer.invoke('completeLinkedInScrape'),
+  parseProfileText: (text: string) => ipcRenderer.invoke('parseProfileText', text),
 
   // ── Export ───────────────────────────────────────────────────
   exportPDF: (html: string, fileName: string, outputDir?: string) =>

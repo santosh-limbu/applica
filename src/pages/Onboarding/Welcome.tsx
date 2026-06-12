@@ -37,7 +37,7 @@ export default function Welcome() {
               className="text-5xl font-extrabold text-gradient"
               style={{ letterSpacing: '-0.04em' }}
             >
-              Applica
+              Applicai
             </h1>
           </div>
 

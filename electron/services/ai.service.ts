@@ -330,3 +330,64 @@ ${jobDescription}`;
   const text = await provider.generateText(prompt, systemPrompt);
   return parseJsonResponse<ATSScore>(text);
 }
+
+export async function parseProfileFromText(text: string, provider = getActiveProvider()): Promise<any> {
+  const systemPrompt =
+    'You are an expert resume parsing assistant. Your task is to analyze the provided raw profile text (which may be copied from LinkedIn or extracted from a resume PDF) and structure it into a complete candidate profile matching the specified JSON schema. Do not make up any facts or hallucinate details. Extract exactly what is present in the text. Ensure dates are parsed cleanly. If a value is unknown, return null.';
+
+  const prompt = `Return a JSON object with EXACTLY this schema (no additional keys):
+{
+  "profile": {
+    "full_name": "string — the person's full name",
+    "email": "string or null — the person's email if listed",
+    "phone": "string or null — the person's phone number if listed",
+    "location": "string or null — the person's city/location",
+    "linkedin_url": "string or null — the person's LinkedIn profile URL if listed",
+    "portfolio_url": "string or null — any portfolio or personal website if listed",
+    "professional_summary": "string or null — their about section/summary, or a synthesized brief professional summary of 3-4 sentences based on their roles"
+  },
+  "experiences": [
+    {
+      "company": "string — name of the company",
+      "role": "string — job title / role",
+      "start_date": "string — start date/year (preferably in a format like 'Jan 2020' or '2020')",
+      "end_date": "string or null — end date/year, or null/empty if currently working there",
+      "location": "string or null — job location",
+      "description": "string or null — summary of responsibilities and achievements in this role"
+    }
+  ],
+  "education": [
+    {
+      "institution": "string — school/university name",
+      "degree": "string — degree obtained (e.g. Bachelor of Science, MS)",
+      "field_of_study": "string or null — major/field of study",
+      "start_date": "string or null — start year or date",
+      "end_date": "string or null — graduation year or date",
+      "grade": "string or null — GPA/grade if listed",
+      "description": "string or null — any activities, honors, or description"
+    }
+  ],
+  "skills": [
+    {
+      "name": "string — skill name",
+      "category": "string or null — category of skill (e.g., Technical, Languages, Soft Skills)"
+    }
+  ],
+  "certifications": [
+    {
+      "name": "string — certification name",
+      "issuer": "string or null — issuing organization",
+      "date_obtained": "string or null — date obtained",
+      "expiry_date": "string or null — expiration date",
+      "credential_url": "string or null — credential URL"
+    }
+  ]
+}
+
+RAW PROFILE TEXT:
+${text}`;
+
+  const responseText = await provider.generateText(prompt, systemPrompt);
+  return parseJsonResponse<any>(responseText);
+}
+

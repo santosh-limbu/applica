@@ -105,4 +105,33 @@ describe('AI Config Service', () => {
       expect(storage.saveApiKey).toHaveBeenCalledWith('gemini-secret');
     });
   });
+
+  describe('parseProfileFromText', () => {
+    it('should call generateText and parse structured JSON response', async () => {
+      const mockGenerateText = vi.fn().mockResolvedValue(
+        JSON.stringify({
+          profile: { full_name: 'John Doe' },
+          experiences: [],
+          education: [],
+          skills: [],
+          certifications: [],
+        })
+      );
+
+      const mockProvider = {
+        generateText: mockGenerateText,
+        testConnection: vi.fn(),
+        listModels: vi.fn(),
+      } as any;
+
+      const result = await aiService.parseProfileFromText('Mock LinkedIn Text', mockProvider);
+
+      expect(result.profile.full_name).toBe('John Doe');
+      expect(mockGenerateText).toHaveBeenCalledWith(
+        expect.stringContaining('Mock LinkedIn Text'),
+        expect.any(String)
+      );
+    });
+  });
 });
+

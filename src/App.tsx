@@ -43,7 +43,7 @@ export default function App() {
       <div className="flex items-center justify-center h-full" style={{ height: '100vh' }}>
         <div className="flex flex-col items-center gap-4">
           <div className="btn-spinner" style={{ width: 32, height: 32, borderWidth: 3 }} />
-          <span className="text-secondary text-sm">Loading Applica…</span>
+          <span className="text-secondary text-sm">Loading Applicai…</span>
         </div>
       </div>
     )

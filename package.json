@@ -1,5 +1,5 @@
 {
-  "name": "applica",
+  "name": "applicai",
   "version": "1.0.0",
   "description": "AI-powered CV creation platform for targeted job applications",
   "main": "./out/main/main.js",
@@ -63,8 +63,8 @@
     "vitest": "^4.1.8"
   },
   "build": {
-    "appId": "com.applica.app",
-    "productName": "Applica",
+    "appId": "com.applicai.app",
+    "productName": "Applicai",
     "directories": {
       "buildResources": "build"
     },
