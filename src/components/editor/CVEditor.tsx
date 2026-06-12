@@ -12,6 +12,7 @@ import Placeholder from '@tiptap/extension-placeholder'
 import { useEditorStore } from '@/stores/editor.store'
 import { EditorToolbar } from './EditorToolbar'
 import { SectionBlock } from './SectionBlock'
+import { Columns, Column } from './ColumnsExtension'
 
 interface CVEditorProps {
   onRegenerate?: () => void
@@ -34,6 +35,8 @@ export const CVEditor: React.FC<CVEditorProps> = ({ onRegenerate, isRegenerating
       TextStyle,
       Color,
       SectionBlock,
+      Columns,
+      Column,
       Placeholder.configure({
         placeholder: 'Write something amazing...',
       }),

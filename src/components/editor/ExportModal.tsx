@@ -57,6 +57,8 @@ export const ExportModal: React.FC<ExportModalProps> = ({ isOpen, onClose, appli
               <style>
                 body { margin: 0; padding: 2cm; font-family: 'Inter', sans-serif; }
                 .prose { max-width: none; }
+                .editor-columns, [data-type="columns"] { display: flex; gap: 1.5rem; width: 100%; margin-top: 1rem; margin-bottom: 1rem; }
+                .editor-column, [data-type="column"] { flex: 1; min-width: 0; }
                 /* Template specific styles would be injected here */
               </style>
             </head>

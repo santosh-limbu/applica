@@ -5,7 +5,8 @@ import {
   Heading1, Heading2, Heading3, 
   AlignLeft, AlignCenter, AlignRight,
   List, ListOrdered, Link, Undo, Redo,
-  RefreshCw
+  RefreshCw,
+  Columns
 } from 'lucide-react'
 import Button from '@/components/ui/Button'
 
@@ -139,6 +140,17 @@ export const EditorToolbar: React.FC<EditorToolbarProps> = ({
             onClick={addLink} 
             isActive={editor.isActive('link')} title="Link"
           ><Link className="w-4 h-4" /></ToolbarButton>
+          <ToolbarButton 
+            onClick={() => {
+              editor.chain().focus().insertContent(
+                '<div data-type="columns" class="editor-columns">' +
+                  '<div data-type="column" class="editor-column"><h2>Sidebar</h2><p>Skills, contact info, etc.</p></div>' +
+                  '<div data-type="column" class="editor-column"><h2>Experience</h2><p>Work history details...</p></div>' +
+                '</div>'
+              ).run()
+            }}
+            title="Insert 2 Columns"
+          ><Columns className="w-4 h-4" /></ToolbarButton>
         </div>
       </div>
 

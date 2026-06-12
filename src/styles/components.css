@@ -940,3 +940,50 @@
   background: var(--border-default);
   width: 100%;
 }
+
+/* ============================================================
+   Columns styling in Editor, Preview, and PDF/DOCX Export
+   ============================================================ */
+.editor-columns, [data-type="columns"] {
+  display: flex;
+  gap: 1.5rem;
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+}
+
+.editor-column, [data-type="column"] {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Style columns specifically within the active editor wrapper (.ProseMirror) */
+.ProseMirror .editor-columns {
+  border: 1px dashed var(--border-default);
+  border-radius: var(--shape-md);
+  padding: 1.5rem 0.75rem 0.75rem 0.75rem;
+  background: rgba(255, 255, 255, 0.01);
+}
+
+.ProseMirror .editor-column {
+  border: 1px dashed rgba(255, 255, 255, 0.08);
+  border-radius: var(--shape-sm);
+  padding: 1.5rem 0.75rem 0.75rem 0.75rem;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.ProseMirror .editor-columns:hover {
+  border-color: var(--accent-primary);
+}
+
+.ProseMirror .editor-column:hover {
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Responsive columns inside editor and on small viewports */
+@media (max-width: 768px) {
+  .editor-columns, [data-type="columns"] {
+    flex-direction: column;
+    gap: 1rem;
+  }
+}
