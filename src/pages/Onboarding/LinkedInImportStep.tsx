@@ -6,6 +6,7 @@ import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import ProgressCircle from '@/components/ui/ProgressCircle'
+import Tabs from '@/components/ui/Tabs'
 import StepIndicator from '@/components/ui/StepIndicator'
 
 type StepState = 'input' | 'processing'
@@ -224,26 +225,16 @@ export default function LinkedInImportStep() {
             </div>
 
             {/* Methods Tabs */}
-            <div className="flex bg-surface p-1 rounded-lg border border-default mb-5">
-              <button
-                className={`flex-1 py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                  method === 'automated' ? 'bg-subtle text-accent' : 'text-tertiary hover:text-secondary'
-                }`}
-                style={method === 'automated' ? { background: 'var(--accent-muted)', color: 'var(--accent-primary)' } : undefined}
-                onClick={() => setMethod('automated')}
-              >
-                <Linkedin size={14} /> Guided Browser Sync
-              </button>
-              <button
-                className={`flex-1 py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-1.5 transition-all ${
-                  method === 'paste' ? 'bg-subtle text-accent' : 'text-tertiary hover:text-secondary'
-                }`}
-                style={method === 'paste' ? { background: 'var(--accent-muted)', color: 'var(--accent-primary)' } : undefined}
-                onClick={() => setMethod('paste')}
-              >
-                <Clipboard size={14} /> Paste Text / File
-              </button>
-            </div>
+            <Tabs
+              activeTab={method}
+              onChange={(id) => setMethod(id as any)}
+              tabs={[
+                { id: 'automated', label: 'Guided Browser Sync' },
+                { id: 'paste', label: 'Paste Text / File' },
+              ]}
+              variant="pill"
+              className="mb-5"
+            />
 
             {method === 'automated' ? (
               <div className="flex flex-col gap-4">

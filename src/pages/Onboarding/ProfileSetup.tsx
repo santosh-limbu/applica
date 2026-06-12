@@ -6,6 +6,7 @@ import type { Profile } from '@/types/ipc.types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
+import Tabs from '@/components/ui/Tabs'
 import StepIndicator from '@/components/ui/StepIndicator'
 
 type Tab = 'personal' | 'summary' | 'writing' | 'references'
@@ -100,21 +101,12 @@ export default function ProfileSetup() {
         </div>
 
         {/* Tabs */}
-        <div className="tabs mb-6">
-          {tabs.map((t) => {
-            const Icon = t.icon
-            return (
-              <button
-                key={t.id}
-                className={`tab flex items-center gap-2 ${activeTab === t.id ? 'tab-active' : ''}`}
-                onClick={() => setActiveTab(t.id)}
-              >
-                <Icon size={14} />
-                {t.label}
-              </button>
-            )
-          })}
-        </div>
+        <Tabs
+          activeTab={activeTab}
+          onChange={(id) => setActiveTab(id as Tab)}
+          tabs={tabs}
+          className="mb-6"
+        />
 
         {/* Tab content */}
         <Card variant="surface" padding="lg" className="mb-6">

@@ -1,8 +1,6 @@
 import { useEffect, useState, useMemo } from 'react'
 import {
   PlusCircle,
-  Search,
-  FileText,
   Trash2,
   MoreHorizontal,
   Briefcase,
@@ -10,6 +8,8 @@ import {
   Trophy,
   TrendingUp,
   RefreshCw,
+  LayoutGrid,
+  List,
 } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
@@ -17,7 +17,12 @@ import type { Application } from '@/types/ipc.types'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Badge from '@/components/ui/Badge'
-import Modal from '@/components/ui/Modal'
+import ConfirmDialog from '@/components/ui/ConfirmDialog'
+import SearchField from '@/components/ui/SearchField'
+import Tabs from '@/components/ui/Tabs'
+import DataTable from '@/components/ui/DataTable'
+import IconButton from '@/components/ui/IconButton'
+import PageHeader from '@/components/layout/PageHeader'
 import ProfilePanel from './ProfilePanel'
 
 const statusFilters = [
@@ -58,6 +63,62 @@ export default function DashboardPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [deleteTarget, setDeleteTarget] = useState<Application | null>(null)
   const [statusMenu, setStatusMenu] = useState<number | null>(null)
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid')
+
+  const columns = useMemo(() => [
+    {
+      key: 'company',
+      header: 'Company',
+      render: (app: Application) => (
+        <span className="font-semibold text-primary">{app.company}</span>
+      ),
+    },
+    {
+      key: 'role_title',
+      header: 'Role',
+      render: (app: Application) => (
+        <span className="hover:text-accent font-semibold transition-colors">
+          {app.role_title}
+        </span>
+      ),
+    },
+    {
+      key: 'status',
+      header: 'Status',
+      render: (app: Application) => <Badge status={app.status || 'draft'} />,
+    },
+    {
+      key: 'applied_date',
+      header: 'Applied Date',
+      render: (app: Application) =>
+        app.applied_date ? new Date(app.applied_date).toLocaleDateString() : '-',
+    },
+    {
+      key: 'ats_score',
+      header: 'ATS Score',
+      render: (app: Application) =>
+        app.ats_score !== undefined && app.ats_score !== null ? (
+          <span className="font-bold text-accent">{app.ats_score}%</span>
+        ) : (
+          '-'
+        ),
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (app: Application) => (
+        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+          <IconButton
+            onClick={() => {
+              setDeleteTarget(app)
+            }}
+          >
+            <Trash2 size={16} style={{ color: 'var(--danger)' }} />
+          </IconButton>
+        </div>
+      ),
+    },
+  ], [navigate, setCurrentApplication])
 
   useEffect(() => {
     loadApplications()
@@ -110,15 +171,15 @@ export default function DashboardPage() {
 
   return (
     <>
-      <div className="page-header flex justify-between items-center mb-6">
-        <div>
-          <h1 className="page-title">Dashboard</h1>
-          <p className="page-subtitle">Track and manage your job applications</p>
-        </div>
-        <Button iconLeft={<PlusCircle size={16} />} onClick={() => navigate('new-application')}>
-          New Application
-        </Button>
-      </div>
+      <PageHeader
+        title="Dashboard"
+        subtitle="Track and manage your job applications"
+        actions={
+          <Button iconLeft={<PlusCircle size={16} />} onClick={() => navigate('new-application')}>
+            New Application
+          </Button>
+        }
+      />
 
       <div className="dashboard-layout">
         {/* Left Column: Profile widget */}
@@ -127,7 +188,7 @@ export default function DashboardPage() {
         {/* Right Column: Applications Tracker & Stats */}
         <div className="flex flex-col gap-6" style={{ minWidth: 0 }}>
           {/* Stats row */}
-          <div className="grid gap-4" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+          <div className="grid gap-4 grid-cols-4">
             <StatCard icon={Briefcase} label="Total Applications" value={stats.total} />
             <StatCard icon={TrendingUp} label="Active" value={stats.active} color="var(--info)" />
             <StatCard icon={Target} label="Interviews" value={stats.interviews} color="var(--accent-primary)" />
@@ -136,30 +197,40 @@ export default function DashboardPage() {
 
           {/* Filter bar */}
           <div className="flex items-center justify-between gap-3 bg-surface p-3 rounded-xl border border-default">
-            <div className="flex-1 max-w-sm">
-              <div className="input-with-icon">
-                <span className="input-icon">
-                  <Search size={16} />
-                </span>
-                <input
-                  className="input-field"
-                  placeholder="Search applications…"
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                />
-              </div>
-            </div>
+            <SearchField
+              value={search}
+              onChange={setSearch}
+              placeholder="Search applications…"
+              className="max-w-xs"
+            />
 
-            <div className="flex gap-1 flex-wrap">
-              {statusFilters.map((s) => (
-                <button
-                  key={s}
-                  className={`btn btn-sm ${statusFilter === s ? 'btn-primary' : 'btn-ghost'}`}
-                  onClick={() => setStatusFilter(s)}
+            <div className="flex items-center gap-4">
+              <Tabs
+                activeTab={statusFilter}
+                onChange={setStatusFilter}
+                tabs={statusFilters.map((s) => ({
+                  id: s,
+                  label: s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1),
+                }))}
+                variant="pill"
+              />
+
+              <div className="flex items-center gap-1 border-l border-default pl-4">
+                <IconButton
+                  active={viewMode === 'grid'}
+                  onClick={() => setViewMode('grid')}
+                  title="Grid View"
                 >
-                  {s === 'all' ? 'All' : s.charAt(0).toUpperCase() + s.slice(1)}
-                </button>
-              ))}
+                  <LayoutGrid size={16} />
+                </IconButton>
+                <IconButton
+                  active={viewMode === 'table'}
+                  onClick={() => setViewMode('table')}
+                  title="Table View"
+                >
+                  <List size={16} />
+                </IconButton>
+              </div>
             </div>
           </div>
 
@@ -167,12 +238,11 @@ export default function DashboardPage() {
           {isLoading ? (
             <div className="flex flex-col gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="skeleton" style={{ height: 96 }} />
+                <Skeleton key={i} height={96} />
               ))}
             </div>
           ) : filtered.length === 0 ? (
             <div className="empty-state bg-surface rounded-xl border border-default p-12">
-              <FileText className="empty-state-icon" />
               <h3 className="empty-state-title">
                 {applications.length === 0 ? 'No applications yet' : 'No matching applications'}
               </h3>
@@ -187,6 +257,16 @@ export default function DashboardPage() {
                 </Button>
               )}
             </div>
+          ) : viewMode === 'table' ? (
+            <DataTable
+              data={filtered}
+              columns={columns}
+              keyExtractor={(app) => app.id!}
+              onRowClick={(app) => {
+                setCurrentApplication(app)
+                navigate('editor')
+              }}
+            />
           ) : (
             <div className="flex flex-col gap-3">
               {filtered.map((app) => (
@@ -215,7 +295,7 @@ export default function DashboardPage() {
                         <h4 className="text-md font-semibold truncate hover:text-accent transition-colors">{app.role_title}</h4>
                         <Badge status={app.status || 'draft'} />
                       </div>
-                      <div className="flex items-center gap-3 text-sm text-tertiary">
+                      <div className="flex items-center gap-3 text-sm text-secondary">
                         <span>{app.company}</span>
                         {app.applied_date && (
                           <>
@@ -237,7 +317,7 @@ export default function DashboardPage() {
                     {/* ATS score */}
                     {app.ats_score !== undefined && app.ats_score !== null && (
                       <div className="flex flex-col items-end" style={{ minWidth: 80 }}>
-                        <span className="text-xs text-tertiary mb-1">ATS Score</span>
+                        <span className="text-xs text-secondary mb-1">ATS Score</span>
                         <div className="ats-bar" style={{ width: 80 }}>
                           <div className="ats-bar-track">
                             <div className="ats-bar-fill" style={{ width: `${app.ats_score}%` }} />
@@ -250,16 +330,14 @@ export default function DashboardPage() {
                     {/* Actions */}
                     <div className="flex items-center gap-1">
                       <div className="relative">
-                        <Button
-                          variant="ghost"
-                          size="sm"
+                        <IconButton
                           onClick={(e) => {
                             e.stopPropagation()
                             setStatusMenu(statusMenu === app.id ? null : (app.id ?? null))
                           }}
                         >
                           <MoreHorizontal size={16} />
-                        </Button>
+                        </IconButton>
 
                         {statusMenu === app.id && (
                           <div
@@ -283,16 +361,14 @@ export default function DashboardPage() {
                         )}
                       </div>
 
-                      <Button
-                        variant="ghost"
-                        size="sm"
+                      <IconButton
                         onClick={(e) => {
                           e.stopPropagation()
                           setDeleteTarget(app)
                         }}
                       >
                         <Trash2 size={16} style={{ color: 'var(--danger)' }} />
-                      </Button>
+                      </IconButton>
                     </div>
                   </div>
                 </Card>
@@ -302,29 +378,15 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Delete modal */}
-      <Modal
+      <ConfirmDialog
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
+        onConfirm={handleDelete}
         title="Delete Application"
-        footer={
-          <>
-            <Button variant="secondary" size="sm" onClick={() => setDeleteTarget(null)}>
-              Cancel
-            </Button>
-            <Button variant="danger" size="sm" onClick={handleDelete}>
-              Delete
-            </Button>
-          </>
-        }
-      >
-        <p className="text-secondary">
-          Are you sure you want to delete the application for{' '}
-          <strong className="text-primary">{deleteTarget?.role_title}</strong> at{' '}
-          <strong className="text-primary">{deleteTarget?.company}</strong>? This action cannot be
-          undone.
-        </p>
-      </Modal>
+        message={`Are you sure you want to delete the application for ${deleteTarget?.role_title} at ${deleteTarget?.company}? This action cannot be undone.`}
+        confirmText="Delete"
+        danger
+      />
     </>
   )
 }

@@ -21,6 +21,10 @@ export default function App() {
   const [ready, setReady] = useState(false)
 
   useEffect(() => {
+    // Load and apply theme
+    const savedTheme = localStorage.getItem('applica-theme') || 'indigo'
+    document.documentElement.setAttribute('data-theme', savedTheme)
+
     async function init() {
       try {
         const firstRun = await window.api.isFirstRun()

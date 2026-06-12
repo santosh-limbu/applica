@@ -18,6 +18,7 @@ import { useProfileStore } from '@/stores/profile.store'
 import { useEditorStore } from '@/stores/editor.store'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import PageHeader from '@/components/layout/PageHeader'
 
 export default function JobAnalysis() {
   const navigate = useAppStore((s) => s.navigate)
@@ -97,15 +98,15 @@ export default function JobAnalysis() {
 
   return (
     <>
-      <div className="flex items-center gap-3 mb-6">
-        <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} />} onClick={() => navigate('new-application')}>
-          Back
-        </Button>
-        <div>
-          <h1 className="page-title">{currentApplication.role_title}</h1>
-          <p className="page-subtitle">{currentApplication.company}</p>
-        </div>
-      </div>
+      <PageHeader
+        title={currentApplication.role_title}
+        subtitle={currentApplication.company}
+        actions={
+          <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} />} onClick={() => navigate('new-application')}>
+            Back
+          </Button>
+        }
+      />
 
       {/* Required skills */}
       <Card variant="surface" padding="md" className="mb-6">

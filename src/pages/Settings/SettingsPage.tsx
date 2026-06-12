@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import Card from '@/components/ui/Card'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
+import Tabs from '@/components/ui/Tabs'
 import { useAppStore } from '@/stores/app.store'
 import type { ProviderConfig, ProviderInfo } from '@/types/ipc.types'
 import Modal from '@/components/ui/Modal'
@@ -18,6 +19,16 @@ const PROVIDER_ICONS: Record<string, React.ReactNode> = {
 
 export const SettingsPage: React.FC = () => {
   const { addToast } = useAppStore()
+
+  // Theme state
+  const [activeTheme, setActiveTheme] = useState(() => localStorage.getItem('applica-theme') || 'indigo')
+
+  const handleThemeChange = (themeName: string) => {
+    setActiveTheme(themeName)
+    localStorage.setItem('applica-theme', themeName)
+    document.documentElement.setAttribute('data-theme', themeName)
+    addToast({ title: 'Theme Updated', message: `Theme set to ${themeName.charAt(0).toUpperCase() + themeName.slice(1)}`, type: 'success' })
+  }
 
   // Prompt editor state
   const [isPromptEditorOpen, setIsPromptEditorOpen] = useState(false)
@@ -250,17 +261,17 @@ export const SettingsPage: React.FC = () => {
                 key={p.id}
                 className={`p-4 cursor-pointer transition-all ${
                   config.provider === p.id
-                    ? 'border-accent bg-accent/10 ring-1 ring-accent/30'
-                    : 'hover:border-subtle'
+                    ? 'border-accent bg-accent-muted'
+                    : 'hover:border-hover'
                 }`}
                 onClick={() => handleSelectProvider(p.id)}
               >
                 <div className="flex flex-col items-center text-center gap-2">
-                  <div className={`${config.provider === p.id ? 'text-accent' : 'text-muted'}`}>
+                  <div className={`${config.provider === p.id ? 'text-accent' : 'text-secondary'}`}>
                     {PROVIDER_ICONS[p.icon] || <Monitor className="w-6 h-6" />}
                   </div>
                   <div className="font-semibold text-sm text-white">{p.name}</div>
-                  <div className="text-xs text-muted leading-tight">{p.description}</div>
+                  <div className="text-xs text-secondary leading-tight">{p.description}</div>
                 </div>
               </Card>
             ))}
@@ -418,10 +429,32 @@ export const SettingsPage: React.FC = () => {
             <h2 className="text-xl font-semibold text-white">Appearance</h2>
           </div>
           <Card className="p-6">
-            <p className="text-sm text-muted mb-4">Choose your preferred theme.</p>
-            <div className="flex gap-4">
-              <Button variant="outline" className="border-accent text-accent bg-accent/10">Dark Mode (Default)</Button>
-              <Button variant="outline" disabled className="opacity-50" title="Coming soon">Light Mode</Button>
+            <p className="text-sm text-secondary mb-4">Choose your preferred theme accent.</p>
+            <div className="flex flex-wrap gap-3">
+              {[
+                { id: 'indigo', label: 'Indigo', color: '#6366f1' },
+                { id: 'emerald', label: 'Emerald', color: '#10b981' },
+                { id: 'amber', label: 'Amber', color: '#f59e0b' },
+                { id: 'rose', label: 'Rose', color: '#f43f5e' },
+                { id: 'steel', label: 'Steel', color: '#3b82f6' },
+              ].map((theme) => (
+                <button
+                  key={theme.id}
+                  type="button"
+                  onClick={() => handleThemeChange(theme.id)}
+                  className={`flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium transition-all ${
+                    activeTheme === theme.id
+                      ? 'border-accent text-accent bg-accent-muted'
+                      : 'border-default text-secondary hover:border-hover hover:text-primary'
+                  }`}
+                >
+                  <span
+                    className="w-3 h-3 rounded-full"
+                    style={{ backgroundColor: theme.color }}
+                  />
+                  {theme.label}
+                </button>
+              ))}
             </div>
           </Card>
         </section>
@@ -490,28 +523,17 @@ export const SettingsPage: React.FC = () => {
           </p>
 
           {/* Prompt Tab Selector */}
-          <div className="flex gap-1 bg-surface-elevated p-1 rounded-lg border border-default">
-            {[
+          <Tabs
+            activeTab={promptTab}
+            onChange={(id) => setPromptTab(id as any)}
+            tabs={[
               { id: 'prompt_job_analysis', label: 'Job Analysis' },
               { id: 'prompt_cv_generation', label: 'CV Tailoring' },
               { id: 'prompt_cover_letter', label: 'Cover Letter' },
               { id: 'prompt_ats_scoring', label: 'ATS Scoring' }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setPromptTab(tab.id as any)}
-                className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer"
-                style={{
-                  background: promptTab === tab.id ? 'var(--bg-hover)' : 'transparent',
-                  color: promptTab === tab.id ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                  border: 'none',
-                  outline: 'none'
-                }}
-              >
-                {tab.label}
-              </button>
-            ))}
-          </div>
+            ]}
+            variant="pill"
+          />
 
           {/* Prompt Area */}
           {isLoadingPrompts ? (

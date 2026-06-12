@@ -6,6 +6,7 @@ import { useApplicationStore } from '@/stores/application.store'
 import { FileDown, RefreshCw, Wand2, ArrowLeft, Copy, Save } from 'lucide-react'
 import { useEditor, EditorContent } from '@tiptap/react'
 import StarterKit from '@tiptap/starter-kit'
+import PageHeader from '@/components/layout/PageHeader'
 
 export const CoverLetterPage: React.FC = () => {
   const { currentApplication, applications, setCurrentApplication, setGenerating, generatingApplications } = useApplicationStore()
@@ -200,48 +201,44 @@ export const CoverLetterPage: React.FC = () => {
 
   return (
     <div className="flex flex-col h-full overflow-hidden p-6 gap-6">
-      <div className="flex justify-between items-center">
-        <div className="flex items-center gap-4">
-          <Button variant="ghost" onClick={() => navigate('dashboard')} className="p-2">
-            <ArrowLeft className="w-5 h-5" />
-          </Button>
-          <div>
-            <h1 className="text-3xl font-bold text-white tracking-tight">Cover Letter</h1>
-            <p className="text-muted mt-1">
-              For {currentApplication?.role_title || 'Unknown Role'} at {currentApplication?.company || 'Unknown Company'}
-            </p>
+      <PageHeader
+        title="Cover Letter"
+        subtitle={`For ${currentApplication?.role_title || 'Unknown Role'} at ${currentApplication?.company || 'Unknown Company'}`}
+        actions={
+          <div className="flex gap-4 items-center">
+            <Button variant="ghost" onClick={() => navigate('dashboard')} className="p-2 mr-2">
+              <ArrowLeft className="w-5 h-5" />
+            </Button>
+            <Button variant="outline" onClick={handleGenerate} loading={isGenerating || isGeneratingCL}>
+              <Wand2 className="w-4 h-4 mr-2" /> 
+              {content ? 'Regenerate' : 'Generate with AI'}
+            </Button>
+            {content && (
+              <>
+                <Button variant="outline" onClick={handleSave} loading={isSaving}>
+                  <Save className="w-4 h-4 mr-2" /> Save Letter
+                </Button>
+                <Button variant="outline" onClick={handleCopy}>
+                  <Copy className="w-4 h-4 mr-2" /> Copy to Clipboard
+                </Button>
+              </>
+            )}
+            <Button onClick={handleExport} disabled={!content}>
+              <FileDown className="w-4 h-4 mr-2" /> Export PDF
+            </Button>
           </div>
-        </div>
-        <div className="flex gap-4">
-          <Button variant="outline" onClick={handleGenerate} loading={isGenerating || isGeneratingCL}>
-            <Wand2 className="w-4 h-4 mr-2 inline" /> 
-            {content ? 'Regenerate' : 'Generate with AI'}
-          </Button>
-          {content && (
-            <>
-              <Button variant="outline" onClick={handleSave} loading={isSaving}>
-                <Save className="w-4 h-4 mr-2 inline" /> Save Letter
-              </Button>
-              <Button variant="outline" onClick={handleCopy}>
-                <Copy className="w-4 h-4 mr-2 inline" /> Copy to Clipboard
-              </Button>
-            </>
-          )}
-          <Button onClick={handleExport} disabled={!content}>
-            <FileDown className="w-4 h-4 mr-2 inline" /> Export PDF
-          </Button>
-        </div>
-      </div>
+        }
+      />
 
       <div className="flex-1 overflow-y-auto pr-2 pb-10 flex justify-center">
         <div className="w-full max-w-3xl">
           {!content && !(isGenerating || isGeneratingCL) ? (
             <Card className="p-12 flex flex-col items-center justify-center text-center gap-4 h-full">
-              <div className="w-16 h-16 bg-accent/20 rounded-full flex items-center justify-center text-accent mb-2">
+              <div className="w-16 h-16 bg-accent-muted rounded-full flex items-center justify-center text-accent mb-2">
                 <FileDown className="w-8 h-8" />
               </div>
               <h2 className="text-xl font-semibold text-white">No Cover Letter Yet</h2>
-              <p className="text-muted max-w-md">
+              <p className="text-secondary max-w-md">
                 Generate a tailored cover letter matching your profile and the target job description.
               </p>
               <Button onClick={handleGenerate} className="mt-4">

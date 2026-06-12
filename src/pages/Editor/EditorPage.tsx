@@ -4,6 +4,9 @@ import { TemplatePreview } from '@/components/editor/TemplatePreview'
 import { ExportModal } from '@/components/editor/ExportModal'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import Tabs from '@/components/ui/Tabs'
+import SplitPane from '@/components/layout/SplitPane'
+import IconButton from '@/components/ui/IconButton'
 import { useEditorStore } from '@/stores/editor.store'
 import { useAppStore } from '@/stores/app.store'
 import { useApplicationStore } from '@/stores/application.store'
@@ -207,44 +210,16 @@ export const EditorPage: React.FC = () => {
               </div>
 
               {/* Tab selector */}
-              <div className="flex gap-1 bg-surface-elevated p-1 rounded-lg border border-default">
-                <button 
-                  onClick={() => setRefTab('analysis')} 
-                  className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer text-center"
-                  style={{
-                    background: refTab === 'analysis' ? 'var(--bg-hover)' : 'transparent',
-                    color: refTab === 'analysis' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                    border: 'none',
-                    outline: 'none'
-                  }}
-                >
-                  Analysis
-                </button>
-                <button 
-                  onClick={() => setRefTab('description')} 
-                  className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer text-center"
-                  style={{
-                    background: refTab === 'description' ? 'var(--bg-hover)' : 'transparent',
-                    color: refTab === 'description' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                    border: 'none',
-                    outline: 'none'
-                  }}
-                >
-                  JD
-                </button>
-                <button 
-                  onClick={() => setRefTab('ats')} 
-                  className="flex-1 py-1.5 text-xs font-semibold rounded-md transition-all duration-200 cursor-pointer text-center"
-                  style={{
-                    background: refTab === 'ats' ? 'var(--bg-hover)' : 'transparent',
-                    color: refTab === 'ats' ? 'var(--accent-primary)' : 'var(--text-secondary)',
-                    border: 'none',
-                    outline: 'none'
-                  }}
-                >
-                  ATS Check
-                </button>
-              </div>
+              <Tabs
+                activeTab={refTab}
+                onChange={(id) => setRefTab(id as any)}
+                tabs={[
+                  { id: 'analysis', label: 'Analysis' },
+                  { id: 'description', label: 'JD' },
+                  { id: 'ats', label: 'ATS Check' }
+                ]}
+                variant="pill"
+              />
  
               {refTab === 'analysis' && (
                 <div className="flex flex-col gap-5">
@@ -407,28 +382,54 @@ export const EditorPage: React.FC = () => {
           </div>
         )}
 
-        {/* Editor Column */}
-        {viewMode !== 'preview' && (
-          <div className="flex-1 flex flex-col min-h-0">
-            <h2 className="text-sm font-semibold text-secondary mb-2 uppercase tracking-wider">Editor</h2>
-            <div className="flex-1 min-h-0">
-              <CVEditor 
-                onRegenerate={handleRegenerate}
-                isRegenerating={isRegenerating}
-                isSaving={isSaving}
-              />
-            </div>
+        {viewMode === 'split' ? (
+          <div className="flex-1 flex min-h-0 overflow-hidden">
+            <SplitPane
+              left={
+                <div className="flex flex-col h-full pr-3 min-h-0">
+                  <h2 className="text-sm font-semibold text-secondary mb-2 uppercase tracking-wider">Editor</h2>
+                  <div className="flex-1 min-h-0">
+                    <CVEditor 
+                      onRegenerate={handleRegenerate}
+                      isRegenerating={isRegenerating}
+                      isSaving={isSaving}
+                    />
+                  </div>
+                </div>
+              }
+              right={
+                <div className="flex flex-col h-full pl-3 min-h-0">
+                  <h2 className="text-sm font-semibold text-secondary mb-2 uppercase tracking-wider">Live Preview</h2>
+                  <div className="flex-1 min-h-0">
+                    <TemplatePreview />
+                  </div>
+                </div>
+              }
+            />
           </div>
-        )}
-
-        {/* Live Preview Column */}
-        {viewMode !== 'editor' && (
-          <div className="flex-1 flex flex-col min-h-0">
-            <h2 className="text-sm font-semibold text-secondary mb-2 uppercase tracking-wider">Live Preview</h2>
-            <div className="flex-1 min-h-0">
-              <TemplatePreview />
-            </div>
-          </div>
+        ) : (
+          <>
+            {viewMode === 'editor' && (
+              <div className="flex-1 flex flex-col min-h-0">
+                <h2 className="text-sm font-semibold text-secondary mb-2 uppercase tracking-wider">Editor</h2>
+                <div className="flex-1 min-h-0">
+                  <CVEditor 
+                    onRegenerate={handleRegenerate}
+                    isRegenerating={isRegenerating}
+                    isSaving={isSaving}
+                  />
+                </div>
+              </div>
+            )}
+            {viewMode === 'preview' && (
+              <div className="flex-1 flex flex-col min-h-0">
+                <h2 className="text-sm font-semibold text-secondary mb-2 uppercase tracking-wider">Live Preview</h2>
+                <div className="flex-1 min-h-0">
+                  <TemplatePreview />
+                </div>
+              </div>
+            )}
+          </>
         )}
       </div>
 

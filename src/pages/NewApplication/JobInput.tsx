@@ -16,6 +16,8 @@ import { useProfileStore } from '@/stores/profile.store'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
+import Tabs from '@/components/ui/Tabs'
+import PageHeader from '@/components/layout/PageHeader'
 
 type Tab = 'paste' | 'url'
 
@@ -89,21 +91,15 @@ export default function JobInput() {
   return (
     <div className="flex flex-col h-full gap-6 overflow-hidden p-1">
       {/* Page Header */}
-      <div className="flex items-center gap-4">
-        <Button 
-          variant="ghost" 
-          size="sm" 
-          iconLeft={<ArrowLeft size={16} />} 
-          onClick={() => navigate('dashboard')}
-          style={{ padding: '8px' }}
-        >
-          Back
-        </Button>
-        <div>
-          <h1 className="text-3xl font-bold text-white tracking-tight" style={{ margin: 0 }}>New Application</h1>
-          <p className="text-muted mt-1" style={{ margin: 0 }}>Provide the job details to start tailoring your profile and documents</p>
-        </div>
-      </div>
+      <PageHeader
+        title="New Application"
+        subtitle="Provide the job details to start tailoring your profile and documents"
+        actions={
+          <Button variant="ghost" size="sm" iconLeft={<ArrowLeft size={16} />} onClick={() => navigate('dashboard')}>
+            Back
+          </Button>
+        }
+      />
 
       {/* 2-Column Responsive Layout */}
       <div className="grid gap-6 flex-1 min-h-0 overflow-hidden" style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))' }}>
@@ -132,38 +128,17 @@ export default function JobInput() {
             <div className="divider my-2" />
 
             <div className="flex flex-col gap-3">
-              <label className="text-xs font-semibold text-tertiary uppercase tracking-wider">Description Source</label>
+              <label className="text-xs font-semibold text-secondary uppercase tracking-wider">Description Source</label>
               {/* Tab switcher inside left card */}
-              <div className="flex gap-1 bg-surface-elevated p-1 rounded-lg" style={{ border: '1px solid var(--border-default)' }}>
-                <button
-                  type="button"
-                  className={`flex-1 py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-2 transition-all`}
-                  style={{
-                    background: activeTab === 'paste' ? 'var(--accent-primary)' : 'transparent',
-                    color: activeTab === 'paste' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => setActiveTab('paste')}
-                >
-                  <ClipboardPaste size={14} />
-                  Paste Details
-                </button>
-                <button
-                  type="button"
-                  className={`flex-1 py-2 rounded-md text-xs font-semibold flex items-center justify-center gap-2 transition-all`}
-                  style={{
-                    background: activeTab === 'url' ? 'var(--accent-primary)' : 'transparent',
-                    color: activeTab === 'url' ? 'var(--text-primary)' : 'var(--text-tertiary)',
-                    border: 'none',
-                    cursor: 'pointer'
-                  }}
-                  onClick={() => setActiveTab('url')}
-                >
-                  <Link2 size={14} />
-                  Import URL
-                </button>
-              </div>
+              <Tabs
+                activeTab={activeTab}
+                onChange={(id) => setActiveTab(id as Tab)}
+                tabs={[
+                  { id: 'paste', label: 'Paste Details' },
+                  { id: 'url', label: 'Import URL' },
+                ]}
+                variant="pill"
+              />
             </div>
 
             {/* URL Input sub-flow */}
@@ -197,7 +172,7 @@ export default function JobInput() {
                 iconLeft={!analyzing ? <Sparkles size={18} /> : undefined}
                 iconRight={!analyzing ? <ArrowRight size={18} /> : undefined}
                 onClick={handleAnalyze}
-                style={{ width: '100%', padding: '12px' }}
+                style={{ width: '100%' }}
               >
                 {analyzing ? 'AI is performing deep analysis...' : 'Analyze Job Description'}
               </Button>
@@ -208,7 +183,7 @@ export default function JobInput() {
         {/* Right Column: Description Editor */}
         <div className="flex flex-col min-h-0">
           <Card variant="surface" padding="none" className="flex-1 flex flex-col min-h-0 overflow-hidden" style={{ height: '100%' }}>
-            <div className="p-4 border-b border-default bg-surface-elevated flex justify-between items-center" style={{ borderBottom: '1px solid var(--border-default)', background: 'var(--bg-elevated)' }}>
+            <div className="p-4 border-b border-default bg-surface-elevated flex justify-between items-center">
               <h3 className="text-sm font-semibold text-secondary uppercase tracking-wider m-0" style={{ margin: 0 }}>Job Description</h3>
               {description.trim() && (
                 <span className="badge badge-draft text-[10px] uppercase font-bold py-0.5 px-2">
@@ -218,16 +193,8 @@ export default function JobInput() {
             </div>
             <div className="flex-1 p-4 flex flex-col min-h-0">
               <textarea
-                className="flex-1 input-field p-4 text-sm resize-none overflow-y-auto bg-black/10 rounded-xl"
-                style={{
-                  minHeight: '280px',
-                  fontFamily: 'inherit',
-                  lineHeight: '1.6',
-                  border: '1px solid var(--border-default)',
-                  outline: 'none',
-                  color: 'var(--text-primary)',
-                  background: 'var(--bg-surface)'
-                }}
+                className="flex-1 textarea-field p-4 text-sm resize-none overflow-y-auto bg-surface"
+                style={{ minHeight: '280px', lineHeight: '1.6' }}
                 placeholder="Paste the full job description here...&#10;&#10;Include responsibilities, required skills, daily tasks, and qualifications. This text will be analyzed to tailor your CV templates and generate targeted cover letters."
                 value={description}
                 onChange={(e) => setDescription((e.target as HTMLTextAreaElement).value)}

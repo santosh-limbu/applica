@@ -1,0 +1,150 @@
+/* src/styles/tokens.css */
+:root {
+  /* Fonts - Sticking with Inter */
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+
+  /* Typography Scale */
+  --text-xs: 0.6875rem;    /* 11px */
+  --text-sm: 0.8125rem;    /* 13px */
+  --text-base: 0.875rem;   /* 14px */
+  --text-md: 1rem;         /* 16px */
+  --text-lg: 1.125rem;     /* 18px */
+  --text-xl: 1.25rem;      /* 20px */
+  --text-2xl: 1.5rem;      /* 24px */
+  --text-3xl: 1.875rem;    /* 30px */
+  --text-4xl: 2.25rem;     /* 36px */
+  --text-5xl: 3rem;        /* 48px */
+
+  --leading-tight: 1.2;
+  --leading-normal: 1.5;
+  --leading-relaxed: 1.7;
+
+  /* Spacing Scale (4px base) */
+  --space-0: 0px;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* Transitions */
+  --transition-fast: 120ms ease;
+  --transition-base: 200ms ease;
+  --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+  --transition-spring: 500ms cubic-bezier(0.34, 1.56, 0.64, 1);
+
+  /* Layout */
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 64px;
+  --titlebar-height: 32px;
+  --content-max-width: 1600px;
+
+  /* Shapes (M3 Roundness) */
+  --shape-none: 0;
+  --shape-xs: 4px;
+  --shape-sm: 8px;
+  --shape-md: 12px;
+  --shape-lg: 16px;
+  --shape-xl: 24px;
+  --shape-full: 9999px;
+  
+  /* Core Dark backgrounds */
+  --bg-base: #0a0a0f;
+  --bg-surface: #12121a;
+  --bg-elevated: #181824;
+  --bg-hover: #1e1e2d;
+  --bg-active: #242438;
+
+  /* Borders */
+  --border-default: #242436;
+  --border-subtle: rgba(255, 255, 255, 0.05);
+  --border-hover: rgba(255, 255, 255, 0.12);
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+
+  /* Text Colors */
+  --text-primary: #ffffff;
+  --text-secondary: #a1a1aa;
+  --text-tertiary: #52525b;
+  --text-inverse: #0a0a0f;
+
+  /* Semantic Colors */
+  --success: #10b981;
+  --success-muted: rgba(16, 185, 129, 0.15);
+  --warning: #f59e0b;
+  --warning-muted: rgba(245, 158, 11, 0.15);
+  --danger: #f43f5e;
+  --danger-muted: rgba(244, 63, 94, 0.15);
+  --info: #3b82f6;
+  --info-muted: rgba(59, 130, 246, 0.15);
+
+  /* Glass Effects */
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-bg-hover: rgba(255, 255, 255, 0.04);
+  --glass-border: rgba(255, 255, 255, 0.06);
+  --glass-blur: 12px;
+}
+
+/* Theme 1: Indigo (Default Premium Dark) */
+:root, [data-theme="indigo"] {
+  --accent-primary: #6366f1;
+  --accent-secondary: #8b5cf6;
+  --accent-gradient: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #818cf8 0%, #a78bfa 100%);
+  --accent-muted: rgba(99, 102, 241, 0.15);
+  --accent-ring: rgba(99, 102, 241, 0.5);
+  --shadow-glow: 0 0 24px rgba(99, 102, 241, 0.15);
+}
+
+/* Theme 2: Emerald (Teal/Green) */
+[data-theme="emerald"] {
+  --accent-primary: #10b981;
+  --accent-secondary: #06b6d4;
+  --accent-gradient: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #34d399 0%, #22d3ee 100%);
+  --accent-muted: rgba(16, 185, 129, 0.15);
+  --accent-ring: rgba(16, 185, 129, 0.5);
+  --shadow-glow: 0 0 24px rgba(16, 185, 129, 0.15);
+}
+
+/* Theme 3: Amber (Warm gold/amber) */
+[data-theme="amber"] {
+  --accent-primary: #f59e0b;
+  --accent-secondary: #f97316;
+  --accent-gradient: linear-gradient(135deg, #f59e0b 0%, #f97316 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #fbbf24 0%, #fb923c 100%);
+  --accent-muted: rgba(245, 158, 11, 0.15);
+  --accent-ring: rgba(245, 158, 11, 0.5);
+  --shadow-glow: 0 0 24px rgba(245, 158, 11, 0.15);
+}
+
+/* Theme 4: Rose (Sophisticated Ruby/Rose) */
+[data-theme="rose"] {
+  --accent-primary: #f43f5e;
+  --accent-secondary: #d946ef;
+  --accent-gradient: linear-gradient(135deg, #f43f5e 0%, #d946ef 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #fb7185 0%, #e879f9 100%);
+  --accent-muted: rgba(244, 63, 94, 0.15);
+  --accent-ring: rgba(244, 63, 94, 0.5);
+  --shadow-glow: 0 0 24px rgba(244, 63, 94, 0.15);
+}
+
+/* Theme 5: Steel (Clean Slate/Blue) */
+[data-theme="steel"] {
+  --accent-primary: #3b82f6;
+  --accent-secondary: #06b6d4;
+  --accent-gradient: linear-gradient(135deg, #3b82f6 0%, #06b6d4 100%);
+  --accent-gradient-hover: linear-gradient(135deg, #60a5fa 0%, #22d3ee 100%);
+  --accent-muted: rgba(59, 130, 246, 0.15);
+  --accent-ring: rgba(59, 130, 246, 0.5);
+  --shadow-glow: 0 0 24px rgba(59, 130, 246, 0.15);
+}

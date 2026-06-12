@@ -164,8 +164,8 @@ export default function ApiKeySetup() {
               key={p.id}
               className={`flex flex-col items-center gap-1.5 p-3 rounded-lg border text-center transition-all ${
                 config.provider === p.id
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-subtle hover:border-accent/30 text-muted'
+                  ? 'border-accent bg-accent-muted text-accent'
+                  : 'border-default hover:border-hover text-secondary'
               }`}
               onClick={() => handleSelectProvider(p.id)}
             >
@@ -255,7 +255,7 @@ export default function ApiKeySetup() {
                 )}
                 {config.provider !== 'gemini' && (
                   <button
-                    className="p-2.5 rounded-lg border border-subtle hover:bg-accent/10 text-muted hover:text-accent transition-colors"
+                    className="p-2.5 rounded-lg border border-default hover:bg-subtle text-secondary hover:text-accent transition-colors"
                     onClick={async () => {
                       setIsLoadingModels(true)
                       try {
