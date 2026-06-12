@@ -12,6 +12,11 @@ import { registerAllHandlers } from './ipc/index';
 // Prioritise IPv4 resolution for localhost to prevent ECONNREFUSED with local AI services (Ollama/LM Studio) on Windows
 dns.setDefaultResultOrder('ipv4first');
 
+// Disable security warnings in development mode to avoid console spam from DevTools-only features (HMR, React DevTools, etc.)
+if (is.dev) {
+  process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+}
+
 let mainWindow: BrowserWindow | null = null;
 
 // ── Single Instance Lock ─────────────────────────────────────
