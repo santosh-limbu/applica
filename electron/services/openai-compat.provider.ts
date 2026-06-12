@@ -11,6 +11,7 @@ interface ChatCompletionResponse {
   choices: Array<{
     message: {
       content: string;
+      reasoning_content?: string;
     };
     finish_reason: string;
   }>;
@@ -128,6 +129,7 @@ export class OpenAICompatProvider implements AIProvider {
         model: this.model,
         messages,
         temperature: 0.4,
+        max_tokens: 4096, // Ensure local reasoning models have enough tokens to finish thinking
       }),
       signal: AbortSignal.timeout(120000), // 2min timeout — local models can be slow
     });
@@ -138,7 +140,14 @@ export class OpenAICompatProvider implements AIProvider {
     }
 
     const data = (await response.json()) as ChatCompletionResponse;
-    const content = data.choices?.[0]?.message?.content;
+    let content = data.choices?.[0]?.message?.content;
+    const reasoningContent = data.choices?.[0]?.message?.reasoning_content;
+
+    // Fallback: If content is empty or only whitespace, and reasoning_content is present,
+    // use reasoning_content. This prevents failures with local reasoning models (e.g. DeepSeek-R1-distill).
+    if ((!content || !content.trim()) && reasoningContent && reasoningContent.trim()) {
+      content = reasoningContent;
+    }
 
     if (!content) {
       throw new Error('AI returned an empty response.');

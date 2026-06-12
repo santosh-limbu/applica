@@ -115,6 +115,32 @@ describe('OpenAICompatProvider', () => {
         { role: 'user', content: 'User prompt' },
       ]);
     });
+
+    it('should fall back to reasoning_content if content is empty or whitespace', async () => {
+      // Arrange
+      const mockReasoning = 'Reasoning output text';
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: () => Promise.resolve({
+          choices: [
+            {
+              message: {
+                content: '   ',
+                reasoning_content: mockReasoning,
+              },
+              finish_reason: 'stop',
+            },
+          ],
+        }),
+      });
+
+      // Act
+      const result = await provider.generateText('User prompt');
+
+      // Assert
+      expect(result).toBe(mockReasoning);
+      expect(global.fetch).toHaveBeenCalledTimes(1);
+    });
   });
 
   describe('listModels', () => {
