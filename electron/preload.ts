@@ -74,6 +74,13 @@ contextBridge.exposeInMainWorld('api', {
   openLinkedInScraper: (url: string) => ipcRenderer.invoke('openLinkedInScraper', url),
   completeLinkedInScrape: () => ipcRenderer.invoke('completeLinkedInScrape'),
   parseProfileText: (text: string) => ipcRenderer.invoke('parseProfileText', text),
+  onParseProfileProgress: (callback: (progress: number) => void) => {
+    const subscription = (_event: any, progress: number) => callback(progress);
+    ipcRenderer.on('parse-profile-progress', subscription);
+    return () => {
+      ipcRenderer.removeListener('parse-profile-progress', subscription);
+    };
+  },
 
   // ── Export ───────────────────────────────────────────────────
   exportPDF: (html: string, fileName: string, outputDir?: string) =>

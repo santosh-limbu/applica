@@ -46,12 +46,14 @@ export function registerScraperHandlers(): void {
     }
   });
 
-  ipcMain.handle('parseProfileText', async (_event, text: string) => {
+  ipcMain.handle('parseProfileText', async (event, text: string) => {
     try {
       if (!text || typeof text !== 'string') {
         throw new Error('Valid text content is required.');
       }
-      return await parseProfileFromText(text);
+      return await parseProfileFromText(text, undefined, (progress) => {
+        event.sender.send('parse-profile-progress', progress);
+      });
     } catch (err) {
       console.error('[IPC:parseProfileText]', err);
       throw new Error(`Failed to parse profile: ${(err as Error).message}`);

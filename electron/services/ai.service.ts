@@ -331,7 +331,11 @@ ${jobDescription}`;
   return parseJsonResponse<ATSScore>(text);
 }
 
-export async function parseProfileFromText(text: string, provider = getActiveProvider()): Promise<any> {
+export async function parseProfileFromText(
+  text: string,
+  provider = getActiveProvider(),
+  onProgress?: (progress: number) => void
+): Promise<any> {
   const systemPrompt =
     'You are an expert resume parsing assistant. Your task is to analyze the provided raw profile text (which may be copied from LinkedIn or extracted from a resume PDF) and structure it into a complete candidate profile matching the specified JSON schema. Do not make up any facts or hallucinate details. Extract exactly what is present in the text. Ensure dates are parsed cleanly. If a value is unknown, return null.';
 
@@ -387,7 +391,22 @@ export async function parseProfileFromText(text: string, provider = getActivePro
 RAW PROFILE TEXT:
 ${text}`;
 
-  const responseText = await provider.generateText(prompt, systemPrompt);
+  let charCount = 0;
+  // Estimate expected output size based on raw text. Parsed JSON is typically around 40-70% of the input text length.
+  const expectedChars = Math.max(1200, text.length * 0.5);
+
+  const responseText = await provider.generateText(prompt, systemPrompt, (chunk) => {
+    charCount += chunk.length;
+    if (onProgress) {
+      const percentage = Math.min(99, Math.round((charCount / expectedChars) * 100));
+      onProgress(percentage);
+    }
+  });
+
+  if (onProgress) {
+    onProgress(100);
+  }
+
   return parseJsonResponse<any>(responseText);
 }
 

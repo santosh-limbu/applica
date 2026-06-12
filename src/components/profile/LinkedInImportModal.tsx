@@ -158,14 +158,9 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
     setLoadingMsg('Applicai AI is analyzing profile text & structuring details...')
     setProgress(0)
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev < 40) return prev + Math.random() * 8 + 3
-        if (prev < 75) return prev + Math.random() * 4 + 1
-        if (prev < 95) return prev + Math.random() * 0.8 + 0.2
-        return prev
-      })
-    }, 250)
+    const unsubscribe = window.api.onParseProfileProgress((streamProgress) => {
+      setProgress(streamProgress)
+    })
 
     try {
       const result = await window.api.parseProfileText(text)
@@ -193,15 +188,15 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
         setSelectedCertifications(certMap)
       }
 
-      clearInterval(interval)
       setProgress(100)
       await new Promise((resolve) => setTimeout(resolve, 400))
 
       setStep('review')
     } catch (err: any) {
-      clearInterval(interval)
       setStep('method')
       addToast({ type: 'error', title: 'AI Parsing Failed', message: err.message })
+    } finally {
+      unsubscribe()
     }
   }
 

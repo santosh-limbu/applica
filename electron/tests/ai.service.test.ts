@@ -129,7 +129,8 @@ describe('AI Config Service', () => {
       expect(result.profile.full_name).toBe('John Doe');
       expect(mockGenerateText).toHaveBeenCalledWith(
         expect.stringContaining('Mock LinkedIn Text'),
-        expect.any(String)
+        expect.any(String),
+        expect.any(Function)
       );
     });
   });

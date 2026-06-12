@@ -82,14 +82,9 @@ export default function LinkedInImportStep() {
     setLoadingMsg('Applicai AI is analyzing profile text & structuring details...')
     setProgress(0)
 
-    const interval = setInterval(() => {
-      setProgress((prev) => {
-        if (prev < 40) return prev + Math.random() * 8 + 3
-        if (prev < 75) return prev + Math.random() * 4 + 1
-        if (prev < 95) return prev + Math.random() * 0.8 + 0.2
-        return prev
-      })
-    }, 250)
+    const unsubscribe = window.api.onParseProfileProgress((streamProgress) => {
+      setProgress(streamProgress)
+    })
 
     try {
       const parsed = await window.api.parseProfileText(text)
@@ -165,8 +160,7 @@ export default function LinkedInImportStep() {
       // Force reload the profile store
       await loadProfile()
 
-      // Stop interval and sweep to 100%
-      clearInterval(interval)
+      // Sweep to 100%
       setProgress(100)
       await new Promise((resolve) => setTimeout(resolve, 400))
 
@@ -178,13 +172,14 @@ export default function LinkedInImportStep() {
 
       navigate('onboarding-profile')
     } catch (err: any) {
-      clearInterval(interval)
       setStepState('input')
       addToast({
         type: 'error',
         title: 'Import failed',
         message: err.message || 'Could not parse LinkedIn profile.',
       })
+    } finally {
+      unsubscribe()
     }
   }
 

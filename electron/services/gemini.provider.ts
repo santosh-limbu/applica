@@ -35,16 +35,46 @@ export class GeminiProvider implements AIProvider {
     }
   }
 
-  async generateText(prompt: string, systemPrompt?: string): Promise<string> {
+  async generateText(
+    prompt: string,
+    systemPrompt?: string,
+    onToken?: (token: string) => void
+  ): Promise<string> {
+    const useStreaming = typeof onToken === 'function';
+
     if (systemPrompt) {
       const genAI = new GoogleGenerativeAI(this.apiKey);
       const modelWithSystem = genAI.getGenerativeModel({
         model: this.modelName,
         systemInstruction: systemPrompt,
       });
+
+      if (useStreaming) {
+        const resultStream = await modelWithSystem.generateContentStream(prompt);
+        let text = '';
+        for await (const chunk of resultStream.stream) {
+          const chunkText = chunk.text();
+          text += chunkText;
+          onToken!(chunkText);
+        }
+        return text;
+      }
+
       const result = await modelWithSystem.generateContent(prompt);
       return result.response.text();
     }
+
+    if (useStreaming) {
+      const resultStream = await this.model.generateContentStream(prompt);
+      let text = '';
+      for await (const chunk of resultStream.stream) {
+        const chunkText = chunk.text();
+        text += chunkText;
+        onToken!(chunkText);
+      }
+      return text;
+    }
+
     const result = await this.model.generateContent(prompt);
     return result.response.text();
   }

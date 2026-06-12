@@ -212,6 +212,7 @@ export interface ElectronAPI {
   openLinkedInScraper: (url: string) => Promise<void>
   completeLinkedInScrape: () => Promise<string>
   parseProfileText: (text: string) => Promise<any>
+  onParseProfileProgress: (callback: (progress: number) => void) => () => void
   exportPDF: (html: string, fileName: string, outputDir?: string) => Promise<string | null>
   exportDOCX: (cvData: any, templateId: string, fileName: string, outputDir?: string) => Promise<string | null>
   saveCv: (cv: CV) => Promise<CV>
