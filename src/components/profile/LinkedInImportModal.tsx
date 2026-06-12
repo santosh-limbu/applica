@@ -19,6 +19,7 @@ import Modal from '@/components/ui/Modal'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import ProgressCircle from '@/components/ui/ProgressCircle'
 
 interface LinkedInImportModalProps {
   open: boolean
@@ -52,6 +53,7 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
   const [step, setStep] = useState<Step>('method')
   const [method, setMethod] = useState<ImportMethod>('automated')
   const [loadingMsg, setLoadingMsg] = useState('')
+  const [progress, setProgress] = useState(0)
 
   // Form inputs
   const [profileUrl, setProfileUrl] = useState('')
@@ -154,6 +156,17 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
 
   const handleParseText = async (text: string) => {
     setLoadingMsg('Applicai AI is analyzing profile text & structuring details...')
+    setProgress(0)
+
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 40) return prev + Math.random() * 8 + 3
+        if (prev < 75) return prev + Math.random() * 4 + 1
+        if (prev < 95) return prev + Math.random() * 0.8 + 0.2
+        return prev
+      })
+    }, 250)
+
     try {
       const result = await window.api.parseProfileText(text)
       setParsedData(result)
@@ -180,8 +193,13 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
         setSelectedCertifications(certMap)
       }
 
+      clearInterval(interval)
+      setProgress(100)
+      await new Promise((resolve) => setTimeout(resolve, 400))
+
       setStep('review')
     } catch (err: any) {
+      clearInterval(interval)
       setStep('method')
       addToast({ type: 'error', title: 'AI Parsing Failed', message: err.message })
     }
@@ -406,7 +424,7 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
 
       {step === 'scraping' && (
         <div className="flex flex-col items-center justify-center py-12 gap-4 text-center">
-          <RefreshCw size={40} className="animate-spin text-accent" />
+          <ProgressCircle progress={progress} />
           <h4 className="text-base font-semibold">{loadingMsg}</h4>
           <p className="text-xs text-tertiary max-w-xs">This might take a minute as our AI structures your details into specific database schemas.</p>
         </div>

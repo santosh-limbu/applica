@@ -948,6 +948,14 @@ p {
   to   { transform: rotate(360deg); }
 }
 
+.animate-spin {
+  animation: spin 1s linear infinite;
+}
+
+.animate-spin-slow {
+  animation: spin 8s linear infinite;
+}
+
 @keyframes countUp {
   from { opacity: 0; transform: translateY(8px); }
   to   { opacity: 1; transform: translateY(0); }

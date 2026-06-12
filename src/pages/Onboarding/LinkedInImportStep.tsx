@@ -5,6 +5,7 @@ import { useProfileStore } from '@/stores/profile.store'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
+import ProgressCircle from '@/components/ui/ProgressCircle'
 
 type StepState = 'input' | 'processing'
 
@@ -20,6 +21,7 @@ export default function LinkedInImportStep() {
   const [pasteText, setPasteText] = useState('')
   const [scraperOpen, setScraperOpen] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
+  const [progress, setProgress] = useState(0)
 
   const handleOpenBrowser = async () => {
     try {
@@ -78,6 +80,17 @@ export default function LinkedInImportStep() {
 
   const handleImportData = async (text: string) => {
     setLoadingMsg('Applicai AI is analyzing profile text & structuring details...')
+    setProgress(0)
+
+    const interval = setInterval(() => {
+      setProgress((prev) => {
+        if (prev < 40) return prev + Math.random() * 8 + 3
+        if (prev < 75) return prev + Math.random() * 4 + 1
+        if (prev < 95) return prev + Math.random() * 0.8 + 0.2
+        return prev
+      })
+    }, 250)
+
     try {
       const parsed = await window.api.parseProfileText(text)
       
@@ -152,6 +165,11 @@ export default function LinkedInImportStep() {
       // Force reload the profile store
       await loadProfile()
 
+      // Stop interval and sweep to 100%
+      clearInterval(interval)
+      setProgress(100)
+      await new Promise((resolve) => setTimeout(resolve, 400))
+
       addToast({
         type: 'success',
         title: 'LinkedIn data imported!',
@@ -160,6 +178,7 @@ export default function LinkedInImportStep() {
 
       navigate('onboarding-profile')
     } catch (err: any) {
+      clearInterval(interval)
       setStepState('input')
       addToast({
         type: 'error',
@@ -185,7 +204,7 @@ export default function LinkedInImportStep() {
 
         {stepState === 'processing' ? (
           <Card variant="surface" padding="lg" className="flex flex-col items-center justify-center py-12 gap-5 text-center">
-            <RefreshCw size={44} className="animate-spin text-accent" />
+            <ProgressCircle progress={progress} />
             <h3 className="text-xl font-bold">{loadingMsg}</h3>
             <p className="text-sm text-secondary max-w-xs">
               Our AI is parsing your profile text, identifying your roles, education, and extracting technical skills...
