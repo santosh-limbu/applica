@@ -5,7 +5,7 @@
 import { ipcMain } from 'electron';
 import { scrapeJobUrl } from '../services/scraper.service';
 import { openLinkedInScraper, completeLinkedInScrape } from '../services/profile-scraper.service';
-import { parseProfileFromText } from '../services/ai.service';
+import { parseProfileFromText, cleanJobDescription } from '../services/ai.service';
 
 export function registerScraperHandlers(): void {
   ipcMain.handle('scrapeJobUrl', async (_event, url: string) => {
@@ -21,7 +21,11 @@ export function registerScraperHandlers(): void {
         throw new Error(`Invalid URL format: ${url}`);
       }
 
-      return await scrapeJobUrl(url);
+      const scraped = await scrapeJobUrl(url);
+      if (scraped.description) {
+        scraped.description = await cleanJobDescription(scraped.description);
+      }
+      return scraped;
     } catch (err) {
       console.error('[IPC:scrapeJobUrl]', err);
       throw new Error(`Scraping failed: ${(err as Error).message}`);

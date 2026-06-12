@@ -410,3 +410,19 @@ ${text}`;
   return parseJsonResponse<any>(responseText);
 }
 
+export async function cleanJobDescription(description: string): Promise<string> {
+  try {
+    const provider = getActiveProvider();
+    const systemPrompt = "You are an expert AI text refiner. Your task is to clean up a scraped webpage text to extract ONLY the job description and relevant role information. Remove all HTML residual artifacts, cookie notices, sign-up forms, navigation menus, footers, website disclaimers, or ads. Keep the formatting (like paragraphs, lists, headers), company overview, responsibilities, requirements, qualifications, and benefits intact. Preserve the exact meaning and key terms.";
+    const prompt = `Please clean up the following scraped text, keeping only the job description and relevant details:
+
+${description}`;
+
+    const text = await provider.generateText(prompt, systemPrompt);
+    return text.trim();
+  } catch (err) {
+    console.warn('[cleanJobDescription] Failed to clean job description with AI, using raw text:', err);
+    return description;
+  }
+}
+

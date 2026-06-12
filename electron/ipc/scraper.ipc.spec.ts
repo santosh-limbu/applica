@@ -13,6 +13,11 @@ vi.mock('../services/scraper.service', () => ({
   scrapeJobUrl: vi.fn(),
 }));
 
+vi.mock('../services/ai.service', () => ({
+  parseProfileFromText: vi.fn(),
+  cleanJobDescription: vi.fn((desc) => Promise.resolve(desc)),
+}));
+
 describe('registerScraperHandlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();

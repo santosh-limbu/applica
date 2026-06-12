@@ -13,6 +13,11 @@ vi.mock('../../services/scraper.service', () => ({
   scrapeJobUrl: vi.fn(),
 }));
 
+vi.mock('../../services/ai.service', () => ({
+  parseProfileFromText: vi.fn(),
+  cleanJobDescription: vi.fn((desc) => Promise.resolve(desc)),
+}));
+
 describe('Scraper IPC Handlers', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -51,6 +56,16 @@ describe('Scraper IPC Handlers', () => {
 
       expect(scrapeJobUrl).toHaveBeenCalledWith('https://example.com/job');
       expect(result).toEqual(mockResult);
+    });
+
+    it('should call scrapeJobUrl service and clean description if present', async () => {
+      const mockResult = { title: 'Test Job', company: 'Test Company', description: 'Raw Job Description' };
+      vi.mocked(scrapeJobUrl).mockResolvedValue(mockResult as any);
+
+      const result = await handler({}, 'https://example.com/job');
+
+      expect(scrapeJobUrl).toHaveBeenCalledWith('https://example.com/job');
+      expect(result.description).toEqual('Raw Job Description');
     });
 
     it('should catch error from scrapeJobUrl service and throw new Error', async () => {

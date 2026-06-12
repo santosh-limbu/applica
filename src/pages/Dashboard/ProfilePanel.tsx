@@ -269,13 +269,6 @@ export default function ProfilePanel() {
             >
               <Edit2 size={14} />
             </button>
-            <button
-              onClick={() => setLinkedinModalOpen(true)}
-              className="text-tertiary hover:text-accent p-1 rounded transition-colors"
-              title="Sync LinkedIn Profile"
-            >
-              <Linkedin size={14} />
-            </button>
           </h3>
           <p className="text-sm text-tertiary mt-1 flex items-center justify-center gap-1">
             <MapPin size={12} /> {profile?.location || 'Add location'}
@@ -647,12 +640,28 @@ export default function ProfilePanel() {
             value={personalForm.phone}
             onChange={(e) => setPersonalForm({ ...personalForm, phone: e.target.value })}
           />
-          <Input
-            label="LinkedIn URL"
-            value={personalForm.linkedin_url}
-            onChange={(e) => setPersonalForm({ ...personalForm, linkedin_url: e.target.value })}
-            placeholder="https://linkedin.com/in/..."
-          />
+          <div className="flex gap-2 items-end">
+            <div className="flex-1">
+              <Input
+                label="LinkedIn URL"
+                value={personalForm.linkedin_url}
+                onChange={(e) => setPersonalForm({ ...personalForm, linkedin_url: e.target.value })}
+                placeholder="https://linkedin.com/in/..."
+              />
+            </div>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setPersonalInfoModal(false)
+                setLinkedinModalOpen(true)
+              }}
+              title="Sync from LinkedIn"
+              className="mb-1"
+              style={{ height: '44px', padding: '0 12px' }}
+            >
+              <Linkedin size={16} />
+            </Button>
+          </div>
           <Input
             label="Portfolio URL"
             value={personalForm.portfolio_url}
