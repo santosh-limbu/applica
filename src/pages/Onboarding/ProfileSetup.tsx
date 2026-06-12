@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ArrowLeft, Check, User, FileText, PenTool } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import { useProfileStore } from '@/stores/profile.store'
