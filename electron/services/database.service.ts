@@ -706,6 +706,6 @@ export function deleteReminder(id: number): void {
 // ── Utility ──────────────────────────────────────────────────
 
 export function isFirstRun(): boolean {
-  const profile = getProfile();
-  return profile === null;
+  const val = getSetting('onboarding_complete');
+  return val !== 'true';
 }

@@ -1,4 +1,4 @@
-import { HTMLAttributes } from 'react'
+import { HTMLAttributes, useId } from 'react'
 
 interface ProgressCircleProps extends HTMLAttributes<HTMLDivElement> {
   progress: number
@@ -17,6 +17,9 @@ export default function ProgressCircle({
   className = '',
   ...props
 }: ProgressCircleProps) {
+  const rawId = useId()
+  const gradientId = `progress-circle-gradient-${rawId.replace(/:/g, '')}`
+  
   // Clamp progress between 0 and 100
   const clampedProgress = Math.max(0, Math.min(100, progress))
   const radius = (size - strokeWidth) / 2
@@ -37,7 +40,7 @@ export default function ProgressCircle({
         viewBox={`0 0 ${size} ${size}`}
       >
         <defs>
-          <linearGradient id="progress-circle-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+          <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" stopColor="var(--accent-primary)" />
             <stop offset="100%" stopColor="var(--accent-secondary)" />
           </linearGradient>
@@ -72,7 +75,7 @@ export default function ProgressCircle({
             cy={center}
             r={radius}
             fill="transparent"
-            stroke="url(#progress-circle-gradient)"
+            stroke={`url(#${gradientId})`}
             strokeWidth={strokeWidth}
             strokeDasharray={circumference}
             strokeDashoffset={strokeDashoffset}
@@ -91,7 +94,7 @@ export default function ProgressCircle({
           cy={center}
           r={radius}
           fill="transparent"
-          stroke="url(#progress-circle-gradient)"
+          stroke={`url(#${gradientId})`}
           strokeWidth={strokeWidth}
           strokeDasharray={circumference}
           strokeDashoffset={strokeDashoffset}

@@ -6,6 +6,7 @@ import type { Profile } from '@/types/ipc.types'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
+import StepIndicator from '@/components/ui/StepIndicator'
 
 type Tab = 'personal' | 'summary' | 'writing' | 'references'
 
@@ -72,7 +73,7 @@ export default function ProfileSetup() {
       await saveProfileToStore(form as Profile)
       await window.api.setSettings('onboarding_complete', 'true')
       await loadProfile()
-      addToast({ type: 'success', title: 'Profile created!', message: 'Welcome to Applica' })
+      addToast({ type: 'success', title: 'Profile created!', message: 'Welcome to Applicai' })
       navigate('dashboard')
     } catch {
       addToast({ type: 'error', title: 'Save failed', message: 'Could not save your profile' })
@@ -251,21 +252,3 @@ export default function ProfileSetup() {
   )
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="step-indicator">
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span
-            className={`step-dot ${
-              i === current ? 'step-dot-active' : i < current ? 'step-dot-done' : ''
-            }`}
-          />
-          {i < total - 1 && (
-            <span className={`step-line ${i < current ? 'step-line-active' : ''}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}

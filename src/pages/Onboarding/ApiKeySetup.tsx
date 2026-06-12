@@ -16,6 +16,7 @@ import { useAppStore } from '@/stores/app.store'
 import Button from '@/components/ui/Button'
 import Input from '@/components/ui/Input'
 import Card from '@/components/ui/Card'
+import StepIndicator from '@/components/ui/StepIndicator'
 import type { ProviderConfig, ProviderInfo } from '@/types/ipc.types'
 
 const PROVIDER_ICONS: Record<string, React.ReactNode> = {
@@ -335,21 +336,3 @@ export default function ApiKeySetup() {
   )
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="step-indicator">
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span
-            className={`step-dot ${
-              i === current ? 'step-dot-active' : i < current ? 'step-dot-done' : ''
-            }`}
-          />
-          {i < total - 1 && (
-            <span className={`step-line ${i < current ? 'step-line-active' : ''}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}

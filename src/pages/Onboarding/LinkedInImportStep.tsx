@@ -1,11 +1,12 @@
 import { useState, useRef } from 'react'
-import { Linkedin, Clipboard, Upload, RefreshCw, ArrowRight, ArrowLeft, Info, HelpCircle } from 'lucide-react'
+import { Linkedin, Clipboard, Upload, RefreshCw, ArrowRight, ArrowLeft, Info } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import { useProfileStore } from '@/stores/profile.store'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
 import Input from '@/components/ui/Input'
 import ProgressCircle from '@/components/ui/ProgressCircle'
+import StepIndicator from '@/components/ui/StepIndicator'
 
 type StepState = 'input' | 'processing'
 
@@ -342,21 +343,3 @@ export default function LinkedInImportStep() {
   )
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="step-indicator">
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span
-            className={`step-dot ${
-              i === current ? 'step-dot-active' : i < current ? 'step-dot-done' : ''
-            }`}
-          />
-          {i < total - 1 && (
-            <span className={`step-line ${i < current ? 'step-line-active' : ''}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}

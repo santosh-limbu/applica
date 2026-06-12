@@ -2,6 +2,7 @@ import { Sparkles, Brain, FileText, BarChart3, ArrowRight } from 'lucide-react'
 import { useAppStore } from '@/stores/app.store'
 import Button from '@/components/ui/Button'
 import Card from '@/components/ui/Card'
+import StepIndicator from '@/components/ui/StepIndicator'
 
 const features = [
   {
@@ -86,21 +87,3 @@ export default function Welcome() {
   )
 }
 
-function StepIndicator({ current, total }: { current: number; total: number }) {
-  return (
-    <div className="step-indicator">
-      {Array.from({ length: total }).map((_, i) => (
-        <div key={i} className="flex items-center gap-2">
-          <span
-            className={`step-dot ${
-              i === current ? 'step-dot-active' : i < current ? 'step-dot-done' : ''
-            }`}
-          />
-          {i < total - 1 && (
-            <span className={`step-line ${i < current ? 'step-line-active' : ''}`} />
-          )}
-        </div>
-      ))}
-    </div>
-  )
-}

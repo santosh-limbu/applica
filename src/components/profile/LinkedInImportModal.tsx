@@ -1,16 +1,12 @@
 import { useState, useRef } from 'react'
 import {
   Linkedin,
-  FileText,
   Upload,
   Clipboard,
   CheckCircle,
   AlertCircle,
   RefreshCw,
   X,
-  Plus,
-  Trash2,
-  ChevronRight,
   Info
 } from 'lucide-react'
 import { useProfileStore } from '@/stores/profile.store'
@@ -63,6 +59,7 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
 
   // Parsed data from AI
   const [parsedData, setParsedData] = useState<any>(null)
+  const [saving, setSaving] = useState(false)
 
   // Selection states for Merge/Overwrite
   const [selectedProfileFields, setSelectedProfileFields] = useState<Record<string, boolean>>({
@@ -90,10 +87,33 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
   // Handle resetting state on close
   const handleClose = () => {
     setStep('method')
+    setMethod('automated')
+    setLoadingMsg('')
+    setProgress(0)
     setProfileUrl('')
     setPasteText('')
     setScraperOpen(false)
     setParsedData(null)
+    setSelectedProfileFields({
+      full_name: true,
+      location: true,
+      email: true,
+      phone: true,
+      linkedin_url: true,
+      portfolio_url: true,
+      professional_summary: true,
+    })
+    setSelectedExperiences({})
+    setSelectedEducation({})
+    setSelectedSkills({})
+    setSelectedCertifications({})
+    setMergePolicies({
+      experiences: 'merge',
+      education: 'merge',
+      skills: 'merge',
+      certifications: 'merge',
+    })
+    setSaving(false)
     onClose()
   }
 
@@ -206,6 +226,8 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
       return
     }
 
+    if (saving) return
+    setSaving(true)
     setStep('scraping')
     setLoadingMsg('Saving imported details to database...')
 
@@ -309,6 +331,8 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
     } catch (err: any) {
       setStep('review')
       addToast({ type: 'error', title: 'Failed to save imported details', message: err.message })
+    } finally {
+      setSaving(false)
     }
   }
 
@@ -442,7 +466,7 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
                 {Object.keys(selectedProfileFields).map((field) => {
                   const val = parsedData.profile?.[field]
                   if (!val) return null
-                  const label = field.replace('_', ' ').replace(/\b\w/g, c => c.toUpperCase())
+                  const label = field.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase())
                   return (
                     <label key={field} className="flex gap-2 items-start p-1.5 rounded hover:bg-hover cursor-pointer border border-subtle">
                       <input
@@ -452,7 +476,7 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
                         className="mt-0.5 text-accent"
                       />
                       <div className="flex flex-col">
-                        <span className="font-medium text-primary text-[10px] text-tertiary">{label}</span>
+                        <span className="font-medium text-[10px] text-tertiary">{label}</span>
                         <span className="truncate max-w-[280px]" title={val}>{val}</span>
                       </div>
                     </label>
@@ -607,7 +631,7 @@ export default function LinkedInImportModal({ open, onClose }: LinkedInImportMod
 
           <div className="flex justify-end gap-3 border-top pt-3 mt-2">
             <Button variant="secondary" onClick={() => setStep('method')}>Back</Button>
-            <Button onClick={handleImportSubmit} variant="primary">Apply to Profile</Button>
+            <Button onClick={handleImportSubmit} variant="primary" loading={saving}>Apply to Profile</Button>
           </div>
         </div>
       )}
