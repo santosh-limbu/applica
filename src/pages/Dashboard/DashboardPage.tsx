@@ -24,6 +24,7 @@ import DataTable from '@/components/ui/DataTable'
 import IconButton from '@/components/ui/IconButton'
 import PageHeader from '@/components/layout/PageHeader'
 import ProfilePanel from './ProfilePanel'
+import Skeleton from '@/components/ui/Skeleton'
 
 const statusFilters = [
   'all',
