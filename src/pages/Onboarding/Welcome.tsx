@@ -68,7 +68,7 @@ export default function Welcome() {
 
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          <StepIndicator current={0} total={3} />
+          <StepIndicator current={0} total={4} />
         </div>
 
         {/* CTA */}

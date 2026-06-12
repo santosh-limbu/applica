@@ -113,7 +113,7 @@ export default function ApiKeySetup() {
 
   const handleContinue = () => {
     if (testResult === 'success') {
-      navigate('onboarding-profile')
+      navigate('onboarding-linkedin')
     }
   }
 
@@ -127,7 +127,7 @@ export default function ApiKeySetup() {
       title: 'AI features disabled',
       message: 'You can configure your AI provider later in Settings',
     })
-    navigate('onboarding-profile')
+    navigate('onboarding-linkedin')
   }
 
   return (
@@ -137,7 +137,7 @@ export default function ApiKeySetup() {
       <div className="onboarding-card">
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          <StepIndicator current={1} total={3} />
+          <StepIndicator current={1} total={4} />
         </div>
 
         <div className="text-center mb-6">

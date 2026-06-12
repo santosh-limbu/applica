@@ -6,6 +6,7 @@ import AppShell from '@/components/layout/AppShell'
 // Pages
 import Welcome from '@/pages/Onboarding/Welcome'
 import ApiKeySetup from '@/pages/Onboarding/ApiKeySetup'
+import LinkedInImportStep from '@/pages/Onboarding/LinkedInImportStep'
 import ProfileSetup from '@/pages/Onboarding/ProfileSetup'
 import DashboardPage from '@/pages/Dashboard/DashboardPage'
 import JobInput from '@/pages/NewApplication/JobInput'
@@ -53,6 +54,7 @@ export default function App() {
   const onboardingPages: Record<string, React.JSX.Element> = {
     'onboarding-welcome': <Welcome />,
     'onboarding-apikey': <ApiKeySetup />,
+    'onboarding-linkedin': <LinkedInImportStep />,
     'onboarding-profile': <ProfileSetup />,
   }
 

@@ -21,11 +21,13 @@ export default function ProfileSetup() {
   const addToast = useAppStore((s) => s.addToast)
   const saveProfileToStore = useProfileStore((s) => s.saveProfile)
   const loadProfile = useProfileStore((s) => s.loadProfile)
+  const profile = useProfileStore((s) => s.profile)
 
   const [activeTab, setActiveTab] = useState<Tab>('personal')
   const [saving, setSaving] = useState(false)
 
   const [form, setForm] = useState<Partial<Profile>>({
+    id: undefined,
     full_name: '',
     email: '',
     phone: '',
@@ -36,6 +38,23 @@ export default function ProfileSetup() {
     writing_samples: '',
     references: '',
   })
+
+  useEffect(() => {
+    if (profile) {
+      setForm({
+        id: profile.id,
+        full_name: profile.full_name || '',
+        email: profile.email || '',
+        phone: profile.phone || '',
+        location: profile.location || '',
+        linkedin_url: profile.linkedin_url || '',
+        portfolio_url: profile.portfolio_url || '',
+        professional_summary: profile.professional_summary || '',
+        writing_samples: profile.writing_samples || '',
+        references: profile.references || '',
+      })
+    }
+  }, [profile])
 
   const update = (field: keyof Profile, value: string) => {
     setForm((prev) => ({ ...prev, [field]: value }))
@@ -69,7 +88,7 @@ export default function ProfileSetup() {
       <div className="onboarding-card" style={{ maxWidth: 580 }}>
         {/* Step indicator */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          <StepIndicator current={2} total={3} />
+          <StepIndicator current={3} total={4} />
         </div>
 
         <div className="text-center mb-6">
@@ -97,16 +116,16 @@ export default function ProfileSetup() {
         </div>
 
         {/* Tab content */}
-        <Card variant="surface" padding="md" className="mb-6">
+        <Card variant="surface" padding="lg" className="mb-6">
           {activeTab === 'personal' && (
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-5">
               <Input
                 label="Full Name *"
                 placeholder="John Doe"
                 value={form.full_name}
                 onChange={(e) => update('full_name', (e.target as HTMLInputElement).value)}
               />
-              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <Input
                   label="Email"
                   type="email"
@@ -128,7 +147,7 @@ export default function ProfileSetup() {
                 value={form.location}
                 onChange={(e) => update('location', (e.target as HTMLInputElement).value)}
               />
-              <div className="grid gap-4" style={{ gridTemplateColumns: '1fr 1fr' }}>
+              <div className="grid gap-5" style={{ gridTemplateColumns: '1fr 1fr' }}>
                 <Input
                   label="LinkedIn URL"
                   placeholder="linkedin.com/in/johndoe"
@@ -210,7 +229,7 @@ export default function ProfileSetup() {
             variant="ghost"
             size="sm"
             iconLeft={<ArrowLeft size={14} />}
-            onClick={() => navigate('onboarding-apikey')}
+            onClick={() => navigate('onboarding-linkedin')}
           >
             Back
           </Button>

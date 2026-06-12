@@ -271,19 +271,19 @@ p {
 
 /* Sizes */
 .btn-sm {
-  height: 32px;
-  padding: 0 var(--space-3);
+  height: 34px;
+  padding: 0 var(--space-4);
   font-size: var(--text-sm);
   border-radius: var(--radius-sm);
 }
 .btn-md {
-  height: 38px;
-  padding: 0 var(--space-5);
+  height: 44px;
+  padding: 0 var(--space-6);
   font-size: var(--text-base);
 }
 .btn-lg {
-  height: 46px;
-  padding: 0 var(--space-8);
+  height: 52px;
+  padding: 0 var(--space-10);
   font-size: var(--text-md);
   border-radius: var(--radius-lg);
 }
@@ -365,7 +365,7 @@ p {
 .input-group {
   display: flex;
   flex-direction: column;
-  gap: var(--space-1);
+  gap: var(--space-2);
 }
 
 .input-label {
@@ -375,8 +375,8 @@ p {
 }
 
 .input-field {
-  height: 40px;
-  padding: 0 var(--space-3);
+  height: 44px;
+  padding: 0 var(--space-4);
   background: var(--bg-surface);
   border: 1px solid var(--border-default);
   border-radius: var(--radius-md);
